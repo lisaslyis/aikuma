@@ -78,10 +78,12 @@ public class RecordActivity extends Activity {
     
     this.proximityDetector = new ProximityDetector(RecordActivity.this, 2.0f) {
       public void near(float distance) {
-  			record(findViewById(R.id.Record));
+        // record(findViewById(R.id.Record));
+        recorder.setNearSource();
       }
       public void far(float distance) {
-  			pause(findViewById(R.id.Pause));
+        // pause(findViewById(R.id.Pause));
+        recorder.setFarSource();
       }
     };
 		this.proximityDetector.start();
