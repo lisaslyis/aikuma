@@ -8,12 +8,15 @@ import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.MotionEvent;
 import android.view.View;
 import android.widget.ImageButton;
 
 import org.json.simple.JSONObject;
 
 import au.edu.unimelb.boldapp.audio.Recorder;
+
+import au.edu.unimelb.boldapp.sensors.ProximityDetector;
 
 /**
  * The activity that allows one to record audio.
@@ -31,6 +34,11 @@ public class RecordActivity extends Activity {
 	 * Instance of the recorder class that offers methods to record.
 	 */
 	private Recorder recorder;
+  
+	/**
+	 * Proximity detector to start/stop recording.
+	 */
+  protected ProximityDetector proximityDetector;
 
 	/**
 	 * UUID of the file being recorded.
@@ -58,6 +66,26 @@ public class RecordActivity extends Activity {
 		recorder.prepare(FileIO.getAppRootPath() + FileIO.getRecordingsPath() +
 				uuid.toString() + ".wav");
 	}
+  
+  /**
+	 * When the activity is resumed.
+   *
+   * TODO Refactor as soon as the record/pause method is extracted.
+	 */
+	@Override
+	public void onResume() {
+    super.onResume();
+    
+    this.proximityDetector = new ProximityDetector(RecordActivity.this, 2.0f) {
+      public void near(float distance) {
+  			record(findViewById(R.id.Record));
+      }
+      public void far(float distance) {
+  			pause(findViewById(R.id.Pause));
+      }
+    };
+		this.proximityDetector.start();
+  }
 
 	/**
 	 * Stops the recording when stopped
@@ -65,6 +93,7 @@ public class RecordActivity extends Activity {
 	@Override
 	public void onStop() {
 		super.onStop();
+    this.proximityDetector.stop();
 		//Pause the recording and adjust the buttons accordingly.
 		pause(findViewById(R.id.Pause));
 	}
@@ -125,4 +154,17 @@ public class RecordActivity extends Activity {
 		pauseButton.setVisibility(View.INVISIBLE);
 		recorder.pause();
 	}
+  
+  /**
+   * If it is close to the ear, any touch event will
+   * be ignored.
+   */
+  @Override
+  public boolean dispatchTouchEvent(MotionEvent event) {
+    if (proximityDetector.isNear()) {
+      return false;
+    } else {
+      return super.dispatchTouchEvent(event);
+    }
+  }
 }
