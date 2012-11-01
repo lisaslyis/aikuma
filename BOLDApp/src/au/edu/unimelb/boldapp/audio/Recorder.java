@@ -26,7 +26,7 @@ import au.edu.unimelb.boldapp.audio.analyzers.SimpleAnalyzer;
  */
 public class Recorder implements AudioHandler {
 
-	protected Thread t;
+	protected Thread listeningThread;
 
 	/** Recording buffer.
 	 *
@@ -134,25 +134,31 @@ public class Recorder implements AudioHandler {
 
 	/** Start listening. */
 	public void listen() {
-
-		// If there is already a thread listening then kill it and ensure it's
-		// dead before creating a new thread.
-		if (t != null) {
-			t.interrupt();
-			while (t.isAlive()) {
-			}
-		}
-
+    // Kill the old thread.
+    //
+    killListeningThread();
+    
 		// Simply reads and reads...
 		//
-		t = new Thread(new Runnable() {
+		listeningThread = new Thread(new Runnable() {
 			@Override
 			public void run() {
 				read();
 			}
 		});
-		t.start();
+		listeningThread.start();
 	}
+  
+	/**
+   * If there is already a thread listening then kill it and ensure it's
+	 * dead before creating a new thread.
+   */
+  public killListeningThread() {
+		if (listeningThread != null) {
+			listeningThread.interrupt();
+			while (listeningThread.isAlive()) {}
+		}
+  }
 
 	/** Stop listening to the microphone and close the file.
 	 *
@@ -179,11 +185,11 @@ public class Recorder implements AudioHandler {
 
 		// Wait until something is heard.
 		while (listener.read(buffer, 0, buffer.length) > 0) {
-			// Hand in a copy of the buffer.
-			//
 			if (Thread.interrupted()) {
 				return;
 			}
+			// Hand in a copy of the buffer.
+			//
 			onBufferFull(Arrays.copyOf(buffer, buffer.length));
 		}
 	}
