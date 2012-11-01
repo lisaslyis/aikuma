@@ -77,8 +77,14 @@ public class Recorder implements AudioHandler {
   }
 
 	/** Waits for the listening device. */
-	public void waitForAudioRecord() {
-		listener = getListener(Constants.SAMPLE_RATE,
+  // TODO We need to rename this as it sets the listener.
+  public void waitForAudioRecord() {
+    waitForAudioRecord(MediaRecorder.AudioSource.MIC);
+  }
+	public void waitForAudioRecord(int audioSource) {
+		listener = getListener(
+        audioSource,
+        Constants.SAMPLE_RATE,
 				AudioFormat.ENCODING_PCM_16BIT,
 				AudioFormat.CHANNEL_CONFIGURATION_MONO);
 		do {
@@ -91,8 +97,12 @@ public class Recorder implements AudioHandler {
 	 * parameters that are useful for AudioRecord.
 	 */
 	protected static AudioRecord getListener(
-			int sampleRate, int audioFormat, int channelConfig) {
-
+     int audioSource,
+     int sampleRate,
+     int audioFormat,
+     int channelConfig
+  ) {
+    
 		// Sample size.
 		//
 		int sampleSize;
@@ -131,15 +141,40 @@ public class Recorder implements AudioHandler {
 	public void prepare(String targetFilename) {
 		file.prepare(targetFilename);
 	}
+  
+  public void setNearSource() {
+    setAudioSource(MediaRecorder.AudioSource.MIC);
+  }
+  public void setFarSource() {
+    setAudioSource(MediaRecorder.AudioSource.MIC);
+  }
+  protected void setAudioSource(int audioSource) {
+    killListeningThread();
+    // TODO? if (listener.getState() == AudioRecord.RECORDSTATE_STOPPED) {
+    listener.release();
+    waitForAudioRecord(audioSource);
+    startListeningThread();
+  }
 
 	/** Start listening. */
 	public void listen() {
     // Kill the old thread.
     //
     killListeningThread();
-    
-		// Simply reads and reads...
-		//
+    startListeningThread();
+	}
+  
+	/**
+   * If there is already a thread listening then kill it and ensure it's
+	 * dead before creating a new thread.
+   */
+  protected void killListeningThread() {
+		if (listeningThread != null) {
+			listeningThread.interrupt();
+			while (listeningThread.isAlive()) {}
+		}
+  }
+  protected void startListeningThread() {
 		listeningThread = new Thread(new Runnable() {
 			@Override
 			public void run() {
@@ -147,17 +182,6 @@ public class Recorder implements AudioHandler {
 			}
 		});
 		listeningThread.start();
-	}
-  
-	/**
-   * If there is already a thread listening then kill it and ensure it's
-	 * dead before creating a new thread.
-   */
-  public killListeningThread() {
-		if (listeningThread != null) {
-			listeningThread.interrupt();
-			while (listeningThread.isAlive()) {}
-		}
   }
 
 	/** Stop listening to the microphone and close the file.
