@@ -67,7 +67,7 @@ public class Recorder implements AudioHandler {
 
 	/** Sets up the listening device. Eg. the microphone. */
 	protected void setUpListener() {
-		waitForAudioRecord();
+		listener = getAudioRecord();
 	}
 
 	/** Sets the file up for writing. */
@@ -78,17 +78,18 @@ public class Recorder implements AudioHandler {
 
 	/** Waits for the listening device. */
   // TODO We need to rename this as it sets the listener.
-  public void waitForAudioRecord() {
-    waitForAudioRecord(MediaRecorder.AudioSource.MIC);
+  public AudioRecord getAudioRecord() {
+    return getAudioRecord(MediaRecorder.AudioSource.MIC);
   }
-	public void waitForAudioRecord(int audioSource) {
-		listener = getListener(
+	public AudioRecord getAudioRecord(int audioSource) {
+		AudioRecord newListener = getListener(
         audioSource,
         Constants.SAMPLE_RATE,
 				AudioFormat.ENCODING_PCM_16BIT,
 				AudioFormat.CHANNEL_CONFIGURATION_MONO);
 		do {
-		} while (listener.getState() != AudioRecord.STATE_INITIALIZED);
+		} while (newListener.getState() != AudioRecord.STATE_INITIALIZED);
+    return newListener;
 	}
 
 	/** Tries to get a listening device for the built-in/external microphone.
@@ -143,16 +144,17 @@ public class Recorder implements AudioHandler {
 	}
   
   public void setNearSource() {
-    setAudioSource(MediaRecorder.AudioSource.MIC);
+    setAudioSource(MediaRecorder.AudioSource.VOICE_UPLINK);
   }
   public void setFarSource() {
-    setAudioSource(MediaRecorder.AudioSource.MIC);
+    setAudioSource(MediaRecorder.AudioSource.CAMCORDER);
   }
   protected void setAudioSource(int audioSource) {
-    killListeningThread();
     // TODO? if (listener.getState() == AudioRecord.RECORDSTATE_STOPPED) {
+    AudioRecord newListener = getAudioRecord(audioSource);
+    killListeningThread();
     listener.release();
-    waitForAudioRecord(audioSource);
+    listener = newListener;
     startListeningThread();
   }
 
@@ -209,12 +211,17 @@ public class Recorder implements AudioHandler {
 
 		// Wait until something is heard.
 		while (listener.read(buffer, 0, buffer.length) > 0) {
-			if (Thread.interrupted()) {
-				return;
-			}
 			// Hand in a copy of the buffer.
 			//
 			onBufferFull(Arrays.copyOf(buffer, buffer.length));
+      
+      // Stop listening if interrupted.
+      //
+			if (Thread.interrupted()) {
+        listener.read(buffer, 0, buffer.length);
+        onBufferFull(Arrays.copyOf(buffer, buffer.length));
+				return;
+			}
 		}
 	}
 
