@@ -16,11 +16,11 @@ public class RobotiumTest extends
 		solo = new Solo(getInstrumentation(), getActivity());
 	}
 
-	public void createUserTest() {
+	public void testCreateUser() {
 		solo.clickOnButton("Create");
 		solo.assertCurrentActivity("Not in CreateUserActivity",
 				CreateUserActivity.class);
-		solo.enterText(0, "Bären");
+		solo.enterText(0, "Bären ausbinden");
 		solo.clickOnImageButton(1);
 		solo.assertCurrentActivity("Not in InitialUserSelectionActivity",
 				InitialUserSelectionActivity.class);
@@ -28,11 +28,17 @@ public class RobotiumTest extends
 		solo.assertCurrentActivity("Not in MainActivity",
 				MainActivity.class);
 		//assertTrue(solo.getText(0).getText().toString().equals("TestUser"));
-		assertTrue(solo.getText("Bären") != null);
+		assertTrue(solo.getText("Bären ausbinden") != null);
 	}
 
-	public void testRobotium2() {
-		assertTrue(true);
+	public void testCreateEmptyUser() {
+		solo.clickOnButton("Create");
+		solo.assertCurrentActivity("Not in CreateUserActivity",
+				CreateUserActivity.class);
+		solo.enterText(0, "");
+		solo.clickOnImageButton(1);
+		solo.assertCurrentActivity("Not in CreateUserActivity",
+				CreateUserActivity.class);
 	}
 
 	public void tearDown() throws Exception {
