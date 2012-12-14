@@ -20,14 +20,13 @@ public class ClientTest extends TestCase {
 	@Override
 	public void setUp() {
 		client = new Client();
-		client.setClientBaseDir("/mnt/sdcard/");
-		//client.setServerBaseDir("/part0/share/");
+		client.setClientBaseDir(new File("/mnt/sdcard/"));
 	}
 
 	public void testLoginLogout() {
 		assertEquals(true, client.login("192.168.1.1", "admin", "admin"));
 		// Test that the findServerBaseDir works for our test router.
-		assertEquals("/part0/share", client.getServerBaseDir());
+		assertEquals(new File("/part0/share"), client.getServerBaseDir());
 		assertEquals(true, client.logout());
 
 		assertEquals(false, client.login("192.168.1.1", "admin", "wrongpass"));

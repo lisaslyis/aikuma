@@ -1,5 +1,6 @@
 package au.edu.unimelb.boldapp.sync;
 
+import android.util.Log;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -7,13 +8,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.SocketException;
-
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
-
-import android.util.Log;
-
 import org.apache.commons.net.ftp.FTP;
 import org.apache.commons.net.ftp.FTPFile;
 import org.apache.commons.net.ftp.FTPConnectionClosedException;
@@ -29,9 +26,37 @@ public class Client {
 	private static final String BOLD_DIR = "bold";
 
 	/**
+	 * The Apache FTPClient used by this FTPClient.
+	 */
+	private org.apache.commons.net.ftp.FTPClient apacheClient;
+
+	/**
+	 * Whether the client is logged in or not.
+	 */
+	private boolean loggedIn = false;
+
+	/**
+	 * The path to the client's working directory.
+	 */
+	private File clientBaseDir;
+
+	/**
+	 * The path to the working directory.
+	 */
+	private String serverBaseDir;
+
+
+	/**
 	 * Set up the working directory for the client.
 	 */
 	public void setClientBaseDir(String clientBaseDir) {
+		this.clientBaseDir = new File(clientBaseDir);
+	}
+
+	/**
+	 * Set up the working directory for the client.
+	 */
+	public void setClientBaseDir(File clientBaseDir) {
 		this.clientBaseDir = clientBaseDir;
 	}
 
@@ -182,11 +207,14 @@ public class Client {
 	public boolean pushDirectory(String directoryPath) {
 		// Get the specified client side directory.
 		File clientDir;
+		/*
 		if (clientBaseDir.endsWith("/")) {
 			clientDir = new File(clientBaseDir + directoryPath);
 		} else {
 			clientDir = new File(clientBaseDir + "/" + directoryPath);
 		}
+		*/
+		clientDir = new File(clientBaseDir, directoryPath);
 		if (!clientDir.isDirectory()) {
 			Log.i("ftp", "1");
 			return false;
@@ -320,7 +348,7 @@ public class Client {
 			return false;
 		}
 
-		File clientDir = new File(clientBaseDir + directoryPath);
+		File clientDir = new File(clientBaseDir, directoryPath);
 		clientDir.mkdirs();
 
 		try {
@@ -479,25 +507,5 @@ public class Client {
 		}
 		return null;
 	}
-
-	/**
-	 * The Apache FTPClient used by this FTPClient.
-	 */
-	private org.apache.commons.net.ftp.FTPClient apacheClient;
-
-	/**
-	 * Whether the client is logged in or not.
-	 */
-	private boolean loggedIn = false;
-
-	/**
-	 * The path to the client's working directory.
-	 */
-	private String clientBaseDir;
-
-	/**
-	 * The path to the working directory.
-	 */
-	private String serverBaseDir;
 
 }
