@@ -2,11 +2,8 @@ package au.edu.unimelb.aikuma.audio.analyzers;
 
 import au.edu.unimelb.aikuma.audio.AudioHandler;
 
-/**
- * Base class for analyzers, whose role is to 
+/** Base class for analyzers.
  *
- * @author	Oliver Adams	<oliver.adams@gmail.com>
- * @author	Florian Hanke	<florian.hanke@gmail.com>
  */
 public abstract class Analyzer {
 
