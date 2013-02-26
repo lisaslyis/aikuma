@@ -63,6 +63,7 @@ public class Recorder implements AudioHandler {
 
 		setUpListener();
 		setUpFile();
+
 	}
 
 	/** Sets up the listening device. Eg. the microphone. */
@@ -80,7 +81,7 @@ public class Recorder implements AudioHandler {
 	public void waitForAudioRecord() {
 		listener = getListener(Constants.SAMPLE_RATE,
 				AudioFormat.ENCODING_PCM_16BIT,
-				AudioFormat.CHANNEL_CONFIGURATION_MONO);
+				AudioFormat.CHANNEL_IN_MONO);
 		do {
 		} while (listener.getState() != AudioRecord.STATE_INITIALIZED);
 	}
@@ -105,7 +106,7 @@ public class Recorder implements AudioHandler {
 		// Channels.
 		//
 		int numberOfChannels;
-		if (channelConfig == AudioFormat.CHANNEL_CONFIGURATION_MONO) {
+		if (channelConfig == AudioFormat.CHANNEL_IN_MONO) {
 			numberOfChannels = 1;
 		} else {
 			numberOfChannels = 2;
@@ -121,7 +122,7 @@ public class Recorder implements AudioHandler {
 		int bufferSize = framePeriod * 2 * sampleSize * numberOfChannels / 8;
 
 		return new AudioRecord(MediaRecorder.AudioSource.MIC,
-				sampleRate, AudioFormat.CHANNEL_CONFIGURATION_MONO,
+				sampleRate, AudioFormat.CHANNEL_IN_MONO,
 				AudioFormat.ENCODING_PCM_16BIT, bufferSize);
 	}
 
