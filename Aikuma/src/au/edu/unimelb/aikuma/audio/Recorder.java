@@ -47,7 +47,7 @@ public class Recorder implements AudioHandler {
 	 *
 	 *Note: Uses an analyzer which tells the recorder to always record.
 	 */
-	public Recorder() {
+	public Recorder() throws RecorderException {
 		this(new SimpleAnalyzer());
 	}
 
@@ -70,7 +70,7 @@ public class Recorder implements AudioHandler {
 	protected void setUpListener() throws RecorderException {
 		listener = getListener(Constants.SAMPLE_RATE,
 				AudioFormat.ENCODING_PCM_16BIT,
-				AudioFormat.CHANNEL_IN_MONO);
+				AudioFormat.CHANNEL_CONFIGURATION_MONO);
 		if (listener.getState() != AudioRecord.STATE_INITIALIZED) {
 			throw new RecorderException("AudioRecord failed to initialize.");
 		}
@@ -102,7 +102,7 @@ public class Recorder implements AudioHandler {
 		// Channels.
 		//
 		int numberOfChannels;
-		if (channelConfig == AudioFormat.CHANNEL_IN_MONO) {
+		if (channelConfig == AudioFormat.CHANNEL_CONFIGURATION_MONO) {
 			numberOfChannels = 1;
 		} else {
 			numberOfChannels = 2;
@@ -227,8 +227,8 @@ public class Recorder implements AudioHandler {
 		public RecorderException(String message) {
 			super(message);
 		}
-		public RecorderException extends Exception {
-			super(message);
+		public RecorderException() {
+			super();
 		}
 	}
 
