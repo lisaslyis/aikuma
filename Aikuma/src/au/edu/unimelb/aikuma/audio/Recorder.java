@@ -58,7 +58,7 @@ public class Recorder implements AudioHandler {
 	 *
 	 * Note: Uses default recording parameters.
 	 */
-	public Recorder(Analyzer analyzer) {
+	public Recorder(Analyzer analyzer) throws RecorderException {
 		this.analyzer = analyzer;
 
 		setUpListener();
@@ -67,8 +67,13 @@ public class Recorder implements AudioHandler {
 	}
 
 	/** Sets up the listening device. Eg. the microphone. */
-	protected void setUpListener() {
-		waitForAudioRecord();
+	protected void setUpListener() throws RecorderException {
+		listener = getListener(Constants.SAMPLE_RATE,
+				AudioFormat.ENCODING_PCM_16BIT,
+				AudioFormat.CHANNEL_IN_MONO);
+		if (listener.getState() != AudioRecord.STATE_INITIALIZED) {
+			throw new RecorderException("AudioRecord failed to initialize.");
+		}
 	}
 
 	/** Sets the file up for writing. */
@@ -76,15 +81,6 @@ public class Recorder implements AudioHandler {
 		file = PCMWriter.getInstance(listener.getSampleRate(),
 				listener.getChannelConfiguration(), listener.getAudioFormat());
   }
-
-	/** Waits for the listening device. */
-	public void waitForAudioRecord() {
-		listener = getListener(Constants.SAMPLE_RATE,
-				AudioFormat.ENCODING_PCM_16BIT,
-				AudioFormat.CHANNEL_IN_MONO);
-		do {
-		} while (listener.getState() != AudioRecord.STATE_INITIALIZED);
-	}
 
 	/** Tries to get a listening device for the built-in/external microphone.
 	 *
@@ -121,9 +117,15 @@ public class Recorder implements AudioHandler {
 		/** The buffer needed for the above period */
 		int bufferSize = framePeriod * 2 * sampleSize * numberOfChannels / 8;
 
+		Log.i("Recorder", "sampleRate: " + sampleRate);
+		Log.i("Recorder", "framePeriod: " + framePeriod);
+		Log.i("Recorder", "sampleSize: " + sampleSize);
+		Log.i("Recorder", "numberOfChannels: " + numberOfChannels);
+		Log.i("Recorder", "bufferSize: " + bufferSize);
+
 		return new AudioRecord(MediaRecorder.AudioSource.MIC,
-				sampleRate, AudioFormat.CHANNEL_IN_MONO,
-				AudioFormat.ENCODING_PCM_16BIT, bufferSize);
+				sampleRate, channelConfig,
+				audioFormat, bufferSize);
 	}
 
 	/**
@@ -217,4 +219,17 @@ public class Recorder implements AudioHandler {
 	public void silenceTriggered(short[] buffer, boolean justChanged) {
 		// Intentionally empty.
 	}
+
+	/**
+	 * An Exception subclass for the recorder class
+	 */
+	public class RecorderException extends Exception {
+		public RecorderException(String message) {
+			super(message);
+		}
+		public RecorderException extends Exception {
+			super(message);
+		}
+	}
+
 }
