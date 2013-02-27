@@ -43,4 +43,14 @@ public class RecorderTest extends AndroidTestCase {
 		Log.i("ManualTesting", "Test ending.");
 	}
 
+	public void testRecorder2() throws Exception {
+		Recorder recorder = new Recorder();
+		recorder.prepare("/mnt/sdcard/bold/testrecordings/testrecord1.wav");
+		recorder.listen();
+		recorder.listen();
+		recorder.listen();
+		recorder.listen();
+		recorder.stop();
+	}
+
 }
