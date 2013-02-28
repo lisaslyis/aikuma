@@ -3,6 +3,7 @@ package au.edu.unimelb.aikuma.util;
 import android.test.AndroidTestCase;
 import android.util.Log;
 import au.edu.unimelb.aikuma.util.Client.ConnectionException;
+import java.io.IOException;
 
 public class ClientTest extends AndroidTestCase {
 
@@ -11,26 +12,29 @@ public class ClientTest extends AndroidTestCase {
 	 */
 	protected Client client;
 
-	public void testConnection() {
+	/**
+	 * Test for a successful connection
+	 */
+	public void testConnection() throws IOException, ConnectionException {
 		client = new Client();
-		boolean connected = true;
-		try {
-			client.connect("192.168.1.1");
-		} catch (ConnectionException e) {
-			Log.e("ClientTest", "message", e);
-			connected = false;
-		}
-		assertTrue(connected);
+		client.connect("192.168.1.1");
+		assertTrue(client.isConnected());
+		client.disconnect();
+		assertTrue(!client.isConnected());
 	}
 
-	public void testConnectionFail() {
+	/**
+	 * Test for an unsuccessful connection
+	 */
+	public void testConnectionFail() throws IOException {
 		client = new Client();
-		boolean connected = true;
 		try {
 			client.connect("SillyHostname");
 		} catch (ConnectionException e) {
-			connected = false;
+			// It's cool.
 		}
-		assertTrue(!connected);
+		assertTrue(!client.isConnected());
+		client.disconnect();
+		assertTrue(!client.isConnected());
 	}
 }

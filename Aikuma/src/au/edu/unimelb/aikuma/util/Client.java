@@ -22,7 +22,7 @@ public class Client {
 	}
 
 	/**
-	 * Connect to the host.
+	 * Connect to the server.
 	 */
 	public void connect(String hostname) throws ConnectionException {
 		try {
@@ -38,11 +38,20 @@ public class Client {
 	}
 
 	/**
-	 * Disconnect from the host
+	 * Disconnect from the server.
 	 */
 	public void disconnect() throws IOException {
 		apacheClient.disconnect();
 		connected = false;
+	}
+
+	/**
+	 * Indicates whether the Client is connected to a server or not.
+	 *
+	 * @return	true if connected; false otherwise
+	 */
+	public boolean isConnected() {
+		return this.connected;
 	}
 
 	/**
@@ -51,7 +60,7 @@ public class Client {
 	private FTPClient apacheClient;
 
 	/**
-	 * Indicates whether the Client is connected to a host or not.
+	 * Flag to indicate whether the Client is connected to a server or not.
 	 */
 	private boolean connected;
 
