@@ -54,4 +54,20 @@ public class ClientTest extends AndroidTestCase {
 		assertTrue(!client.isConnected());
 	}
 
+	public void testDeleteServerDirectory() {
+		client 
+	}
+
+	/*
+	public void testPushPullDirectory() {
+		// Create files on the client side.
+
+		client = new Client(new File("/part0/share/"));
+		client.connect("192.168.1.1");
+		assertTrue(client.login("admin", "admin"));
+
+		client.disconnect();
+	}
+	*/
+
 }
