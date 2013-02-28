@@ -46,7 +46,7 @@ public class Client {
 	/**
 	 * Indicates whether the Client is connected to a server or not.
 	 *
-	 * @return	true if connected; false otherwise
+	 * @return	true if connected; false otherwise.
 	 */
 	public boolean isConnected() {
 		return apacheClient.isConnected();
@@ -57,11 +57,21 @@ public class Client {
 	 *
 	 * @param	username	The username to login under.
 	 * @param	password	The password to use.
+	 * @return	true if successful; false otherwise.
 	 */
 	public boolean login(String username, String password) throws IOException,
 			ConnectionException {
 		apacheClient.login(username, password);
 		return apacheClient.setFileType(FTP.BINARY_FILE_TYPE);
+	}
+
+	/**
+	 * Logout of the server.
+	 *
+	 * @return	true if successful; false otherwise.
+	 */
+	public boolean logout() throws IOException {
+		return apacheClient.logout();
 	}
 
 	/**

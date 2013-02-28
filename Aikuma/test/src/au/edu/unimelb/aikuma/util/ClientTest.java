@@ -49,6 +49,7 @@ public class ClientTest extends AndroidTestCase {
 		assertTrue(client.isConnected());
 		assertTrue(client.login("admin", "admin"));
 		assertTrue(!client.login("someguy", "someguy"));
+		assertTrue(client.logout());
 		client.disconnect();
 		assertTrue(!client.isConnected());
 	}
