@@ -3,6 +3,7 @@ package au.edu.unimelb.aikuma.util;
 import java.io.IOException;
 import java.net.UnknownHostException;
 import java.net.SocketException;
+import org.apache.commons.net.ftp.FTP;
 import org.apache.commons.net.ftp.FTPClient;
 
 /**
@@ -18,7 +19,6 @@ public class Client {
 	 */
 	public Client() {
 		apacheClient = new FTPClient();
-		connected = false;
 	}
 
 	/**
@@ -34,7 +34,6 @@ public class Client {
 		} catch (IOException e) {
 			throw new ConnectionException(e);
 		}
-		connected = true;
 	}
 
 	/**
@@ -42,7 +41,6 @@ public class Client {
 	 */
 	public void disconnect() throws IOException {
 		apacheClient.disconnect();
-		connected = false;
 	}
 
 	/**
@@ -51,18 +49,20 @@ public class Client {
 	 * @return	true if connected; false otherwise
 	 */
 	public boolean isConnected() {
-		return this.connected;
+		return apacheClient.isConnected();
 	}
 
 	/**
-	 * The Apache FTPClient used by this Client
+	 * Attempt to log in to the server using a username and password.
+	 *
+	 * @param	username	The username to login under.
+	 * @param	password	The password to use.
 	 */
-	private FTPClient apacheClient;
-
-	/**
-	 * Flag to indicate whether the Client is connected to a server or not.
-	 */
-	private boolean connected;
+	public boolean login(String username, String password) throws IOException,
+			ConnectionException {
+		apacheClient.login(username, password);
+		return apacheClient.setFileType(FTP.BINARY_FILE_TYPE);
+	}
 
 	/**
 	 * Exception thrown when Client.connect() fails
@@ -81,4 +81,9 @@ public class Client {
 			super(throwable);
 		}
 	}
+
+	/**
+	 * The Apache FTPClient used by this Client
+	 */
+	private FTPClient apacheClient;
 }

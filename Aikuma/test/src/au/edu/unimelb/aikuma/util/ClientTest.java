@@ -37,4 +37,20 @@ public class ClientTest extends AndroidTestCase {
 		client.disconnect();
 		assertTrue(!client.isConnected());
 	}
+
+	/**
+	 * Tests logging in, and that the Client stays logged in if it has
+	 * previously been logged in and then tries to log in unsuccessfully as
+	 * another user.
+	 */
+	public void testLogin() throws IOException, ConnectionException {
+		client = new Client();
+		client.connect("192.168.1.1");
+		assertTrue(client.isConnected());
+		assertTrue(client.login("admin", "admin"));
+		assertTrue(!client.login("someguy", "someguy"));
+		client.disconnect();
+		assertTrue(!client.isConnected());
+	}
+
 }
