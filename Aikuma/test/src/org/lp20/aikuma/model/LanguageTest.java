@@ -1,4 +1,4 @@
-package au.edu.unimelb.aikuma.model;
+package org.lp20.aikuma.model;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,18 +32,5 @@ public class LanguageTest extends TestCase {
 				"[{\"code\":\"gah\",\"name\":\"Alekano\"}" +
 				",{\"code\":\"usa\",\"name\":\"Usarufa\"}]",
 				encodedLanguages.toString());
-	}
-
-	/**
-	 * Ensures that the decodeJSONArray method functions as expected.
-	 */
-	public void testDecodeLanguages() {
-		Language l1 = new Language("Alekano", "gah");
-		Language l2 = new Language("Usarufa", "usa");
-		List<Language> languages = new ArrayList<Language>();
-		languages.add(l1);
-		languages.add(l2);
-		JSONArray encodedLanguages = Language.encodeList(languages);
-		assertEquals(languages, Language.decodeJSONArray(encodedLanguages));
 	}
 }

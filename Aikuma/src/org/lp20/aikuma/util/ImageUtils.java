@@ -1,4 +1,4 @@
-package au.edu.unimelb.aikuma.util;
+package org.lp20.aikuma.util;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -66,7 +66,7 @@ public final class ImageUtils {
 	 * @return	The image as a bitmap
 	 */
 	public static Bitmap retrieveFromFile(String path) throws IOException {
-		// If the path isn't specified absolutely, assume the aikuma directory.
+		// If the path isn't specified absolutely, assume the bold directory.
 		if (!path.startsWith("/")) {
 			path = new File(getImagesPath(), path).getPath();
 		}

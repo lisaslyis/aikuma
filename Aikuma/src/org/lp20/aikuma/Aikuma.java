@@ -1,4 +1,4 @@
-package au.edu.unimelb.aikuma;
+package org.lp20.aikuma;
 
 import android.content.Context;
 import android.provider.Settings.Secure;

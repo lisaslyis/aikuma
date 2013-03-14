@@ -1,8 +1,7 @@
-package au.edu.unimelb.aikuma.model;
+package org.lp20.aikuma.model;
 
 import android.os.Parcelable;
 import android.os.Parcel;
-import java.util.ArrayList;
 import java.util.List;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.json.simple.JSONObject;
@@ -29,14 +28,14 @@ public class Language implements Parcelable {
 	/**
 	 * Name mutator
 	 */
-	private void setName(String name) {
+	public void setName(String name) {
 		this.name = name;
 	}
 
 	/**
 	 * Code mutator
 	 */
-	private void setCode(String code) {
+	public void setCode(String code) {
 		this.code = code;
 	}
 
@@ -146,26 +145,6 @@ public class Language implements Parcelable {
 			languageArray.add(language.encode());
 		}
 		return languageArray;
-	}
-
-	/**
-	 * Decodes a list of languages from a JSONArray
-	 *
-	 * @param	languageArray	A JSONArray object containing the languages.
-	 * @return	A list of the languages in the JSONArray
-	 */
-	public static List<Language> decodeJSONArray(JSONArray languageArray) {
-		List<Language> languages = new ArrayList<Language>();
-		if (languageArray != null) {
-			for (Object langObj : languageArray) {
-				JSONObject jsonLangObj = (JSONObject) langObj;
-				Language lang = new Language(
-						jsonLangObj.get("name").toString(),
-						jsonLangObj.get("code").toString());
-				languages.add(lang);
-			}
-		}
-		return languages;
 	}
 
 	/**
