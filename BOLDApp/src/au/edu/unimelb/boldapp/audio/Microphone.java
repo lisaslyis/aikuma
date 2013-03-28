@@ -22,16 +22,16 @@ import android.util.Log;
  */
 public class Microphone {
 
-	protected Thread t;
+	private Thread t;
 
 	/** Microphone buffer.
 	 *
 	 *  Used to ferry samples to a PCM based file/consumer.
 	 */
-	protected short[] buffer = new short[1000]; // TODO Adapt this buffer size to the sampling rate. 1000 is for 44.1k.
+	private short[] buffer;
 
 	/** AudioRecord listens to the microphone */
-	protected AudioRecord physicalMicrophone;
+	private AudioRecord physicalMicrophone;
   
 	public Microphone() {
 		physicalMicrophone = getListener(
@@ -40,6 +40,18 @@ public class Microphone {
 				AudioFormat.CHANNEL_CONFIGURATION_MONO
 		);
 		waitForPhysicalMicrophone();
+		initializeBuffer();
+	}
+	
+	/**
+	 * The buffer is duration-constant. Length equals a certain time.
+	 * We get about 44 buffers per second.
+	 */
+	private void initializeBuffer() {
+		this.buffer = new short[getBufferSize()];
+	}
+	private int getBufferSize() {
+		return Math.round(1000f*physicalMicrophone.getSampleRate()/44100);
 	}
 	
 	public int getSampleRate() { return physicalMicrophone.getSampleRate(); }
@@ -113,7 +125,7 @@ public class Microphone {
 
 		/** The buffer needed for the above period */
 		int bufferSize = framePeriod * 2 * sampleSize * numberOfChannels / 8;
-
+		
 		return new AudioRecord(MediaRecorder.AudioSource.MIC,
 				sampleRate, AudioFormat.CHANNEL_CONFIGURATION_MONO,
 				AudioFormat.ENCODING_PCM_16BIT, bufferSize);
