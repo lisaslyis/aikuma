@@ -176,7 +176,7 @@ public class RespeakActivity extends Activity {
 			}
 		);
 		
-		extractBackgroundNoiseThreshold();
+		//extractBackgroundNoiseThreshold();
     
 		Audio.playThroughEarpiece(this, false);
 
