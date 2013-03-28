@@ -9,7 +9,7 @@ import java.util.Iterator;
 import java.util.HashMap;
 import java.util.UUID;
 
-import au.edu.unimelb.aikuma.audio.NewSegments.Segment;
+import au.edu.unimelb.aikuma.audio.Segments.Segment;
 
 /**
  * Offers functionality to play a respeaking interleaved with the original.
@@ -22,7 +22,7 @@ public class InterleavedPlayer implements PlayerInterface {
 	 * The object that represents the mapping between segments of the original
 	 * and the respeaking.
 	 */
-	private NewSegments segments;
+	private Segments segments;
 
 	/**
 	 * The Player for the original audio.
@@ -140,7 +140,7 @@ public class InterleavedPlayer implements PlayerInterface {
 	}
 	
 	private void initializeSegments(UUID respeakingUUID) {
-		this.segments = new NewSegments(respeakingUUID);
+		this.segments = new Segments(respeakingUUID);
 	}
 	
 	private void initializeListeners() {

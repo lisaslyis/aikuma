@@ -8,7 +8,7 @@ import android.media.MediaPlayer;
 import android.util.Log;
 
 import au.edu.unimelb.aikuma.FileIO;
-import static au.edu.unimelb.aikuma.audio.NewSegments.Segment;
+import static au.edu.unimelb.aikuma.audio.Segments.Segment;
 
 /**
  * A player that allows individual audio files to be played.

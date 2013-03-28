@@ -38,6 +38,10 @@ public class Recorder implements AudioHandler, MicrophoneListener {
 	/** Analyzer that analyzes the incoming data. */
 	Analyzer analyzer;
 
+	public PCMWriter getFile() {
+		return file;
+	}
+
 	/**
 	 * Plays beeps when recording starts
 	 */
