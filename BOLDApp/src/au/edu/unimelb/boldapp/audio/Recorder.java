@@ -43,6 +43,10 @@ public class Recorder implements AudioHandler {
 	/** File to write to. */
 	protected PCMWriter file;
 
+	public long getCurrentSample() {
+		return file.getCurrentSample();
+	}
+
 	/** Analyzer that analyzes the incoming data. */
 	Analyzer analyzer;
 
