@@ -6,6 +6,7 @@ import android.media.AudioRecord;
 import android.media.MediaRecorder;
 import android.media.MediaPlayer;
 import android.util.Log;
+import java.io.File;
 import java.util.Arrays;
 import java.util.Set;
 import org.lp20.aikuma.audio.record.analyzers.Analyzer;
@@ -17,8 +18,7 @@ import static org.lp20.aikuma.audio.record.Microphone.MicException;
  *  A Recorder used to get input from a microphone and output into a file.
  *
  *  Usage:
- *    Recorder recorder = new Recorder();
- *    recorder.prepare("/mnt/sdcard/bold/recordings/target_file.wav")
+ *    Recorder recorder = new Recorder(someFile, sampleRate);
  *    recorder.listen();
  *    recorder.pause();
  *    recorder.listen();
@@ -32,8 +32,8 @@ public class Recorder implements AudioHandler, MicrophoneListener {
 	 * Creates a Recorder that uses an analyzer which tells the recorder to
 	 * always record regardless of input.
 	 */
-	public Recorder(int sampleRate) throws MicException {
-		this(sampleRate, new SimpleAnalyzer());
+	public Recorder(File targetPath, int sampleRate) throws MicException {
+		this(targetPath, sampleRate, new SimpleAnalyzer());
 	}
 
 	/**
@@ -43,7 +43,7 @@ public class Recorder implements AudioHandler, MicrophoneListener {
 	 * @param Pass in an analyzer which decides whether
 	 *        the recorder should record or ignore the input.
 	 */
-	public Recorder(int sampleRate, Analyzer analyzer) throws MicException {
+	public Recorder(File targetPath, int sampleRate, Analyzer analyzer) throws MicException {
 		this.analyzer = analyzer;
 		Log.i("Recorder", "about to set up microphone");
 		setUpMicrophone(sampleRate);
@@ -72,8 +72,8 @@ public class Recorder implements AudioHandler, MicrophoneListener {
 	/**
 	 * Prepares the recorder for recording.
 	 */
-	public void prepare(String targetFilename) {
-		file.prepare(targetFilename);
+	private void prepare(File targetPath) {
+		file.prepare(targetPath);
 	}
 
 	/** Sets up the micrphone for recording */

@@ -140,13 +140,13 @@ public class PCMWriter {
 
 	/** Prepares the writer for recording by writing the WAV file header.
 	 *
-	 * @param fullFilename The full path of the file to write.
+	 * @param targetFilename The full path of the file to write.
 	 */
-	public void prepare(String fullFilename) {
-		this.fullFilename = fullFilename;
+	public void prepare(File targetFilename) {
+		this.targetFilename = targetFilename;
 		
 		try {
-			createRandomAccessFile(fullFilename);
+			createRandomAccessFile(targetFilename);
 
 			// Write the full WAV PCM file header.
 
@@ -220,7 +220,7 @@ public class PCMWriter {
 	public void close() {
 		// This is only necessary as the randomAccessWriter
 		// might have been closed.
-		createRandomAccessFile(fullFilename);
+		createRandomAccessFile(targetFilename);
 		
 		try {
 			// Write size to RIFF header.
@@ -242,17 +242,16 @@ public class PCMWriter {
 	/**
 	 * Tries to create a RandomAccessFile.
 	 *
-	 * @param fullFilename The full path of the file to write.
+	 * @param targetFilename The full path of the file to write.
 	 */
-	private void createRandomAccessFile(String fullFilename) {
+	private void createRandomAccessFile(File file) {
 		try {
 			// Random access file.
-			File file = new File(this.fullFilename);
 			file.getParentFile().mkdirs();
 			randomAccessWriter = new RandomAccessFile(file, "rw");
 		} catch (FileNotFoundException e) {
 			Log.e(PCMWriter.class.getName(),
-					"Could not create RandomAccessFile: " + this.fullFilename);
+					"Could not create RandomAccessFile: " + this.targetFilename);
 		}
 	}
 
@@ -293,5 +292,5 @@ public class PCMWriter {
 	 */
 	private int payloadSize = 0;
 
-	private String fullFilename;
+	private File targetFilename;
 }
