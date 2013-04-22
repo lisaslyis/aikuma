@@ -150,7 +150,9 @@ public class Recorder implements AudioHandler, MicrophoneListener {
 	public void pause() {
 		recording = false;
 		microphone.stop();
-		endBeepPlayer.start();
+		if (endBeepPlayer != null) {
+			endBeepPlayer.start();
+		}
 	}
 
 	/** Callback for the microphone */
