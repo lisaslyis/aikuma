@@ -58,7 +58,7 @@ public class Respeaker extends Recorder {
 
 	private NewSegments segments;
 
-	private Long originalStartOfSegment;
+	private Long originalStartOfSegment = 0l;
 	private Long originalEndOfSegment;
 	private Long respeakingStartOfSegment;
 	private Long respeakingEndOfSegment;
@@ -150,15 +150,9 @@ public class Respeaker extends Recorder {
 	public void listen() {
 		super.listen();
 		player.play();
-		originalStartOfSegment = player.getCurrentSample();
-		Log.i("segments", "originalStartOfSegment: " + originalStartOfSegment);
 		try {
 			long originalCurrentSample = player.getCurrentSample();
-			//writer.write(originalCurrentSample + ",");
-			Log.i("issue37mapping", "original listen: " +
-					originalCurrentSample);
 		} catch (Exception e) {
-			e.printStackTrace();
 		}
 	}
 
@@ -192,11 +186,9 @@ public class Respeaker extends Recorder {
 			segments.put(originalSegment, respeakingSegment);
 		}
 		try {
-			Log.i("segments", "Samples file name: " + mappingFilename);
 			segments.write(new File(mappingFilename));
 		} catch (IOException e) {
 			// Couldn't write mapping.
-			Log.e("segments", "couldn't write mapping", e);
 		}
 		try {
 			writer.close();
@@ -218,8 +210,6 @@ public class Respeaker extends Recorder {
 	/** Resume playing. */
 	public void resume() {
 		super.listen();
-		originalStartOfSegment = player.getCurrentSample();
-		Log.i("segments", "originalStartOfSegment: " + originalStartOfSegment);
 		switchToPlay();
 	}
 
@@ -234,20 +224,16 @@ public class Respeaker extends Recorder {
 	 */
 	protected void switchToPlay() {
 		rewind(650);
+		/*
 		respeakingEndOfSegment = file.getCurrentSample();
 		Segment originalSegment = new Segment(
 				originalStartOfSegment, originalEndOfSegment);
 		Segment respeakingSegment = new Segment(
 				respeakingStartOfSegment, respeakingEndOfSegment);
-		Log.i("segments", "putting: " + originalStartOfSegment + "," +
-				originalEndOfSegment + ":" + respeakingStartOfSegment + "," +
-				respeakingEndOfSegment);
 		segments.put(originalSegment, respeakingSegment);
 		respeakingStartOfSegment = null;
 		respeakingEndOfSegment = null;
-		Log.i("segments", "respeakingEndOfSegment: " + respeakingEndOfSegment);
-		originalStartOfSegment = player.getCurrentSample();
-		Log.i("segments", "originalStartOfSegment: " + originalStartOfSegment);
+		*/
 		player.resume();
 	}
 
@@ -255,27 +241,17 @@ public class Respeaker extends Recorder {
 	protected void switchToRecord() {
 		player.pause();
 		originalEndOfSegment = player.getCurrentSample();
-		Log.i("segments", "originalEndOfSegment: " + originalEndOfSegment);
 		respeakingStartOfSegment = file.getCurrentSample();
-		Log.i("segments", "respeakingStartOfSegment: " +
-					respeakingStartOfSegment);
 	}
 
 	@Override
 	public void audioTriggered(short[] buffer, boolean justChanged) {
-		Log.i("Bra", "trigga!");
-		Log.i("Bra", "trigga!-");
 		long currentSample = file.getCurrentSample();
 		long originalCurrentSample = player.getCurrentSample();
-		if (currentSample % 10000 == 0) {
-			Log.i("issue37mapping", "r: " + currentSample + " o: " +
-					originalCurrentSample);
-		}
 		if (justChanged) {
 			try {
 				writer.write(originalCurrentSample + ",");
 				respeakingStartOfSegment = currentSample;
-				Log.i("issue37mapping", "original: " + originalCurrentSample);
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -286,33 +262,27 @@ public class Respeaker extends Recorder {
 
 	@Override
 	public void silenceTriggered(short[] buffer, boolean justChanged) {
-		Log.i("Bra", "no dice.");
 		long currentSample = file.getCurrentSample();
 		long originalCurrentSample = player.getCurrentSample();
-		if (currentSample % 10000 == 0) {
-			Log.i("issue37mapping", "r: " + currentSample + " o: " +
-					originalCurrentSample);
-		}
 		if (justChanged) {
 			//If the recording has finished playing and we're just annotating
 			//at the end, then we're finished and can stop the respeaking.
 			try {
-				Log.i("issue37mapping", "respeaking: " + currentSample);
 				writer.write(currentSample + "\n");
 
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
+			respeakingEndOfSegment = file.getCurrentSample();
+			Segment originalSegment = new Segment(
+					originalStartOfSegment, originalEndOfSegment);
+			Segment respeakingSegment = new Segment(
+					respeakingStartOfSegment, respeakingEndOfSegment);
+			segments.put(originalSegment, respeakingSegment);
+			respeakingStartOfSegment = null;
+			respeakingEndOfSegment = null;
+			originalStartOfSegment = player.getCurrentSample();
 			if (getFinishedPlaying()) {
-				respeakingEndOfSegment = file.getCurrentSample();
-				Segment originalSegment = new Segment(
-						originalStartOfSegment, originalEndOfSegment);
-				Segment respeakingSegment = new Segment(
-						respeakingStartOfSegment, respeakingEndOfSegment);
-				Log.i("segments", "putting: " + originalStartOfSegment + "," +
-						originalEndOfSegment + ":" + respeakingStartOfSegment + "," +
-						respeakingEndOfSegment);
-				segments.put(originalSegment, respeakingSegment);
 				super.stop();
 				try {
 					writer.close();
