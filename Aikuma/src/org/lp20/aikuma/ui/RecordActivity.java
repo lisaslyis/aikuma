@@ -74,15 +74,15 @@ public class RecordActivity extends Activity {
 	}
 
 	@Override
+	protected void onNewIntent(Intent intent) {
+		/*Do some stuff*/
+	}
+
+	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		MenuInflater inflater = getMenuInflater();
 		inflater.inflate(R.menu.main, menu);
 		return true;
-	}
-
-	@Override
-	protected void onNewIntent(Intent intent) {
-		/*Do some stuff*/
 	}
 
 	@Override
@@ -182,6 +182,7 @@ public class RecordActivity extends Activity {
 		intent.putExtra("uuidString", uuid.toString());
 		intent.putExtra("sampleRate", sampleRate);
 		startActivity(intent);
+		RecordActivity.this.finish();
 		try {
 			recorder.stop();
 		} catch (MicException e) {
