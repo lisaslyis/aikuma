@@ -1,6 +1,7 @@
 package org.lp20.aikuma;
 
 import android.content.Context;
+import android.os.Environment;
 import android.provider.Settings.Secure;
 import java.util.List;
 import java.io.IOException;
@@ -59,8 +60,19 @@ public class Aikuma extends android.app.Application {
 		}
 	}
 
+	public static boolean canReadAndWriteMedia() {
+		String state = Environment.getExternalStorageState();
+		if (Environment.MEDIA_MOUNTED.equals(state)) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+
 	public static Thread loadLangCodesThread;
 }
+
+
 
 /*
 public class Aikuma extends android.app.Application {
