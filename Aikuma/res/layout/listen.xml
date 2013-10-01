@@ -17,6 +17,21 @@
 		android:layout_height="wrap_content"
 		android:layout_below="@id/ListenFragment"
 	/>
+	<TextView
+		android:id="@+id/ForeignText"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:text="Certo dia um homem foi para o mato."
+		android:layout_below="@id/RespeakingImages"
+		android:textSize="20sp"
+	/>
+	<TextView
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:text="One particular day a man went into the forest."
+		android:layout_below="@id/ForeignText"
+		android:textSize="20sp"
+	/>
 	<LinearLayout
 		android:orientation="vertical"
 		android:layout_width="fill_parent"
