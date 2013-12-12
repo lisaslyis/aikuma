@@ -30,6 +30,11 @@ public class SettingsActivity extends AikumaActivity {
 		startActivity(intent);
 	}
 
+	public void onCloudSyncButton(View view) {
+		Intent intent = new Intent(this, CloudSyncActivity.class);
+		startActivity(intent);
+	}
+
 	@Override
 	public void onBackPressed() {
 		this.finish();

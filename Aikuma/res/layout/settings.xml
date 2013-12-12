@@ -27,4 +27,11 @@
 		android:text="Sync Settings"
 		android:onClick="onSyncSettingsButton"
 	/>
+	<Button
+		android:id="@+id/cloudSyncButton"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:text="Test sync with Google Cloud Storage"
+		android:onClick="onCloudSyncButton"
+	/>
 </LinearLayout>
