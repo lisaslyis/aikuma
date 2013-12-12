@@ -129,6 +129,9 @@ public class RecordActivity extends AikumaActivity {
 			recording = true;
 			ImageButton recordButton =
 					(ImageButton) findViewById(R.id.recordButton);
+			ImageButton saveButton =
+					(ImageButton) findViewById(R.id.stopButton);
+			saveButton.setImageResource(R.drawable.saveblack48);
 			recordButton.setEnabled(false);
 			Beeper.beepBeep(this, new MediaPlayer.OnCompletionListener() {
 				public void onCompletion(MediaPlayer _) {
