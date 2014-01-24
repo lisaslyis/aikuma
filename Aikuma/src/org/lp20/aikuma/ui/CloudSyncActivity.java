@@ -12,8 +12,6 @@ public class CloudSyncActivity extends AikumaActivity {
 	}
 
 	public void onCloudSyncPressed(View view) {
-		try {
-		}
 	}
 
 	@Override
