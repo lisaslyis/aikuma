@@ -12,6 +12,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.Gravity;
 import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
@@ -56,6 +57,28 @@ public class ListenActivity extends AikumaActivity {
 		setUpPlayer();
 		setUpRespeakingImages();
 		setUpRecordingInfo();
+	}
+
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+		MenuInflater inflater = getMenuInflater();
+		inflater.inflate(R.menu.listen, menu);
+		return true;
+	}
+
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		Intent intent;
+		switch (item.getItemId()) {
+			case android.R.id.home:
+				this.finish();
+				return true;
+			case R.id.star:
+				item.setIcon(R.drawable.help_32);
+				return true;
+			default:
+				return true;
+		}
 	}
 
 	// Prepares the recording
@@ -219,16 +242,6 @@ public class ListenActivity extends AikumaActivity {
 	private void setPlayer(InterleavedPlayer player) {
 		this.player = player;
 		fragment.setPlayer(player);
-	}
-
-	@Override
-	public boolean onCreateOptionsMenu(Menu menu) {
-		return menuBehaviour.onCreateOptionsMenu(menu);
-	}
-
-	@Override
-	public boolean onOptionsItemSelected(MenuItem item) {
-		return menuBehaviour.onOptionsItemSelected(item);
 	}
 
 	@Override
