@@ -62,6 +62,13 @@
 		android:layout_height="wrap_content"
 		android:layout_below="@id/ListenFragment"
 	/>
+	<TextView
+		android:id="@+id/transcriptView"
+		android:layout_width="fill_parent"
+		android:layout_height="wrap_content"
+		android:layout_below="@id/RespeakingImages"
+		android:text="hello"
+	/>
 	<LinearLayout
 		android:orientation="vertical"
 		android:layout_width="fill_parent"
