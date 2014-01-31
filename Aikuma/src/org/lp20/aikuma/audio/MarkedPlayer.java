@@ -38,6 +38,23 @@ public class MarkedPlayer extends SimplePlayer {
 	}
 
 	/**
+	 * Constructor
+	 *
+	 * @param	recording	The metadata of the recording to be played
+	 * @param	playThroughSpeaker	True if the audio is to be played through the main
+	 * speaker; false if through the ear piece (ie the private phone call style)
+	 * @throws	IOException	If there is an issue reading from the data source.
+	 */
+	 public MarkedPlayer(Recording recording, boolean playThroughSpeaker)
+	 		throws IOException {
+		super(recording, playThroughSpeaker);
+		notificationMarkerLoop = new Thread(new NotificationMarkerLoop());
+		notificationMarkerLoop.start();
+		unsetNotificationMarkerPosition();
+		count++;
+	 }
+
+	/**
 	 * Returns the marker position in milliseconds
 	 *
 	 * @return	marker position in milliseconds
