@@ -3,9 +3,11 @@ package org.lp20.aikuma.audio;
 import android.app.Activity;
 import android.widget.TextView;
 import java.io.IOException;
+import java.util.Iterator;
 import org.lp20.aikuma.model.Recording;
 import org.lp20.aikuma.model.Segments.Segment;
 import org.lp20.aikuma.model.Transcript;
+import org.lp20.aikuma.R;
 
 /**
  * A player that plays recordings that have transcriptions; updates an
@@ -15,12 +17,15 @@ import org.lp20.aikuma.model.Transcript;
  * @author	Oliver Adams	<oliver.adams@gmail.com>
  */
 public class TranscriptPlayer extends MarkedPlayer {
-	// The view where the transcript is outputted.
-	private TextView transcriptView;
 	// The transcription for the recording being played.
 	private Transcript transcript;
 	// The segment of the recording that is currently being played.
 	private Segment segment;
+	// The activity to display the transcript
+	private Activity activity;
+	// An iterator over the segments in the recording that correspond to some
+	// transcription text
+	private Iterator<Segment> segmentIterator;
 
 	/**
 	 * Constructor
@@ -37,7 +42,7 @@ public class TranscriptPlayer extends MarkedPlayer {
 			boolean playThroughSpeaker) throws IOException {
 		super(recording, playThroughSpeaker);
 
-		transcriptView = (TextView) activity.findViewByID(R.id.transcriptView);
+		this.activity = activity;
 		transcript = new Transcript(recording);
 
 	}
@@ -45,12 +50,17 @@ public class TranscriptPlayer extends MarkedPlayer {
 	private OnMarkerReachedListener onTranscriptMarkerReachedListener =
 			new OnMarkerReachedListener() {
 		public void onMarkerReached(MarkedPlayer p) {
+			final TextView transcriptView = (TextView)
+					activity.findViewById(R.id.transcriptView);
 			activity.runOnUiThread(new Runnable() {
 				public void run() {
 					transcriptView.setText(transcript.getTranscriptSegment(
-							TranscriptPlayer.this.segment))
+							TranscriptPlayer.this.segment));
 					if (segmentIterator.hasNext()) {
-						
+						TranscriptPlayer.this.segment =
+								TranscriptPlayer.this.segmentIterator.next();
+						TranscriptPlayer.this.setNotificationMarkerPosition(
+								TranscriptPlayer.this.segment);
 					}
 				}
 			});
