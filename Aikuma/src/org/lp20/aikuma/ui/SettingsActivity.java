@@ -127,6 +127,38 @@ public class SettingsActivity extends AikumaActivity {
 	 * @param	_button	The SoundCloud sync button that was pressed.
 	 */
 	public void onSoundCloudSyncButton(View _button) {
+		downloadTrackInfo();
+	}
+
+	/**
+	 * Gets track information from SoundCloud
+	 */
+	private void downloadTrackInfo() {
+		ApiWrapper wrapper = 
+			new ApiWrapper("faf6c1ce9bcbae1975eece02d5040e80", 
+				"d4c30a13a73f83d503ef8cdc7dbd0c91", null, null);
+		Token token;
+		try {
+			token = wrapper.login("oliver.adams@gmail.com", "aikumatest");
+			Toast.makeText(this, "token: " + token, Toast.LENGTH_LONG).show();
+			HttpResponse resp = wrapper.get(Request.to(Endpoints.MY_TRACKS));
+			if (resp.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
+				Log.i("soundcloud","\n" + Http.formatJSON(Http.getString(resp)));
+			} else {
+				Log.i("soundcloud","Invalid status received: " + resp.getStatusLine());
+			}
+
+		} catch (IOException e) {
+			Toast.makeText(this, "login exception: " + e.getMessage(), Toast.LENGTH_LONG).show();
+		}/* catch (JSONException e) {
+			Toast.makeText(this, "json exception: " + e.getMessage(), Toast.LENGTH_LONG).show();
+		}*/
+	}
+
+	/**
+	 * Pushes a dummy file to SoundCloud
+	 */
+	private void pushTestFile() {
 		ApiWrapper wrapper = 
 				new ApiWrapper("faf6c1ce9bcbae1975eece02d5040e80", "d4c30a13a73f83d503ef8cdc7dbd0c91", null, null);
 		Token token;
