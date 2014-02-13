@@ -20,6 +20,13 @@
 		android:text="Sync Settings"
 		android:onClick="onSyncSettingsButton"
 	/>
+	<Button
+		android:id="@+id/testSoundCloudSync"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:text="Test SoundCloud sync"
+		android:onClick="onSoundCloudSyncButton"
+	/>
 	<TextView
 		android:layout_width="match_parent"
 		android:layout_height="wrap_content"

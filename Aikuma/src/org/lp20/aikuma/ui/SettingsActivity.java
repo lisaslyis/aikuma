@@ -18,6 +18,15 @@ import org.lp20.aikuma.R;
 import org.lp20.aikuma.util.FileIO;
 import org.lp20.aikuma.util.UsageUtils;
 
+import com.soundcloud.api.ApiWrapper;
+import com.soundcloud.api.Endpoints;
+import com.soundcloud.api.Http;
+import com.soundcloud.api.Params;
+import com.soundcloud.api.Request;
+import com.soundcloud.api.Token;
+import org.apache.http.HttpResponse;
+import org.apache.http.HttpStatus;
+
 /**
  * The mother activity for settings - hosts buttons that link to various
  * specific settings activities.
@@ -110,5 +119,45 @@ public class SettingsActivity extends AikumaActivity {
 	public void onSyncSettingsButton(View view) {
 		Intent intent = new Intent(this, SyncSettingsActivity.class);
 		startActivity(intent);
+	}
+
+	/**
+	 * Tests syncing some files to SoundCloud
+	 *
+	 * @param	_button	The SoundCloud sync button that was pressed.
+	 */
+	public void onSoundCloudSyncButton(View _button) {
+		ApiWrapper wrapper = 
+				new ApiWrapper("faf6c1ce9bcbae1975eece02d5040e80", "d4c30a13a73f83d503ef8cdc7dbd0c91", null, null);
+		Token token;
+		try {
+			token = wrapper.login("oliver.adams@gmail.com", "aikumatest");
+			Toast.makeText(this, "token: " + token, Toast.LENGTH_LONG).show();
+			final File file = new File(FileIO.getAppRootPath(), "test.wav");
+			HttpResponse resp = wrapper.post(Request.to(Endpoints.TRACKS)
+					.add(Params.Track.TITLE, file.getName())
+					.add(Params.Track.TAG_LIST, "demo upload")
+					.withFile(Params.Track.ASSET_DATA, file)
+					.setProgressListener(new Request.TransferProgressListener()
+					{
+						@Override
+						public void transferred(long amount) {
+							Log.i("soundcloud", "amount: " + amount);
+						}
+					}));
+			if (resp.getStatusLine().getStatusCode() == HttpStatus.SC_CREATED) {
+				Log.i("soundcloud", "\n201 Created "+resp.getFirstHeader("Location").getValue());
+
+				// dump the representation of the new track
+				//Log.i("soundcloud","\n" + Http.getJSON(resp).toString(4));
+			} else {
+				Log.i("soundcloud", "Invalid status received: " + resp.getStatusLine());
+			}
+
+		} catch (IOException e) {
+			Toast.makeText(this, "login exception: " + e.getMessage(), Toast.LENGTH_LONG).show();
+		}/* catch (JSONException e) {
+			Toast.makeText(this, "json exception: " + e.getMessage(), Toast.LENGTH_LONG).show();
+		}*/
 	}
 }
