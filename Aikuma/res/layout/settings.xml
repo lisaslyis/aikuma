@@ -20,6 +20,13 @@
 		android:text="Sync Settings"
 		android:onClick="onSyncSettingsButton"
 	/>
+	<Button
+		android:id="@+id/p2pWifi"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:text="p2p Wifi"
+		android:onClick="p2pWifi"
+	/>
 	<TextView
 		android:layout_width="match_parent"
 		android:layout_height="wrap_content"
