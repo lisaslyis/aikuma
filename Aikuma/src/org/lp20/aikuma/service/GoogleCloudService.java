@@ -817,12 +817,8 @@ public class GoogleCloudService extends IntentService{
 		try {
 			Log.i(TAG, "tokens");
 			googleAuthToken = GoogleAuthUtil.getToken(getApplicationContext(), googleEmailAccount, AikumaSettings.getScope());
-			Log.i(TAG, AikumaSettings.getScope() +" : " );
-			Log.i(TAG, googleAuthToken);
 			
 			googleIdToken = GoogleAuthUtil.getToken(getApplicationContext(), googleEmailAccount, AikumaSettings.getIdTokenScope());
-			Log.i(TAG, AikumaSettings.getIdTokenScope() + " : ");
-			Log.i(TAG, googleIdToken);
 		} catch (Exception e) {
 			Log.e(TAG, "Unrecoverable error " + e.getMessage());
 		}

@@ -4,7 +4,15 @@
 */
 package org.lp20.aikuma.ui;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.ProtocolException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -17,11 +25,18 @@ import org.json.simple.parser.ParseException;
 import org.lp20.aikuma.Aikuma;
 import org.lp20.aikuma.MainActivity;
 import org.lp20.aikuma2.R;
+import org.lp20.aikuma.model.FileModel;
 import org.lp20.aikuma.model.Recording;
+import org.lp20.aikuma.service.GoogleCloudService;
+import org.lp20.aikuma.storage.DataStore;
 import org.lp20.aikuma.storage.FusionIndex;
+import org.lp20.aikuma.storage.GoogleDriveStorage;
 import org.lp20.aikuma.storage.Index;
+import org.lp20.aikuma.storage.Utils;
 import org.lp20.aikuma.util.AikumaSettings;
+import org.lp20.aikuma.util.FileIO;
 
+import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
@@ -33,6 +48,7 @@ import android.view.KeyEvent;
 import android.view.View;
 import android.view.View.OnKeyListener;
 import android.widget.EditText;
+import android.widget.TextView;
 
 /**
  * @author	Sangyeop Lee	<sangl1@student.unimelb.edu.au>
@@ -42,6 +58,9 @@ import android.widget.EditText;
 public class CloudSearchActivity extends AikumaListActivity {
 	
 	private static final String TAG = "CloudSearchActivity";
+	
+	private String googleEmailAccount;
+	private String googleAuthToken;
 	
 	private MediaPlayer mediaPlayer;
 	
@@ -59,6 +78,9 @@ public class CloudSearchActivity extends AikumaListActivity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.cloud_search);
 		setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+		
+		googleEmailAccount = AikumaSettings.getCurrentUserId();
+		googleAuthToken = AikumaSettings.getCurrentUserToken();
 		
 		mediaPlayer = new MediaPlayer();
 		setUpQuickMenu();
@@ -113,10 +135,8 @@ public class CloudSearchActivity extends AikumaListActivity {
 		recordings.clear();
 		recordingsDownUri.clear();
 		String langQuery = searchQueryView.getText().toString().toLowerCase();
-		String emailAccount = AikumaSettings.getCurrentUserId();
-		String accessToken = AikumaSettings.getCurrentUserToken();
 		
-		new GetSearchResultsTask(0, langQuery, emailAccount, accessToken).execute();
+		new GetSearchResultsTask(0, langQuery, googleEmailAccount, googleAuthToken).execute();
 	}
 
 	private void showRecordingsOnCloud() {
@@ -152,10 +172,21 @@ public class CloudSearchActivity extends AikumaListActivity {
 					Log.i(TAG, recording.getCloudIdentifier());
 					String downUri = recordingsDownUri.get(recording.getId());
 					//TODO: If preview file doesn't exist, Download the sample(preview)
+					File sampleFile = recording.getPreviewFile();
+					if(sampleFile.exists()) {
+						// Play sample
+						setUpPlayer(sampleFile);
+						mediaPlayer.start();	
+					} else {
+						String sampleCloudId = new FileModel(recording.getVersionName(), 
+								recording.getOwnerId(), recording.getPreviewId(), "preview", "wav").
+								getCloudIdentifier(0);
+						List<String> cloudId = new ArrayList<String>();
+						cloudId.add(sampleCloudId);
+						new RequestShareFileTask(cloudId, googleEmailAccount, googleAuthToken).execute();
+					}
 					
-					// Play sample
-					//setUpPlayer(recording);
-					//mediaPlayer.start();	
+					
 	
 				} else if (pos == 1) { //Download the item
 					Log.i(TAG, recording.getId());
@@ -170,11 +201,11 @@ public class CloudSearchActivity extends AikumaListActivity {
 		});
 	}
 	
-	private void setUpPlayer(Recording recording) {
+	private void setUpPlayer(File recordingFile) {
 		mediaPlayer.reset();
 		mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
 		try {
-			mediaPlayer.setDataSource(recording.getPreviewFile().getCanonicalPath());
+			mediaPlayer.setDataSource(recordingFile.getCanonicalPath());
 			mediaPlayer.prepare();
 		} catch (IOException e) {
 			Log.e(TAG, "Failed to prepare MediaPlayer: " + e.getMessage());
@@ -262,5 +293,144 @@ public class CloudSearchActivity extends AikumaListActivity {
         	if(result && queryType == 0)
         		showRecordingsOnCloud();
         }
+    }
+    
+    private class RequestShareFileTask extends AsyncTask<Void, Void, Boolean> {
+    	private static final String TAG = "RequestShareFileTask";
+
+    	private String mEmailAccount;
+    	private String mAccessToken;
+    	//private String mIdToken;
+    	private List<String> mFileCloudIds;
+    	private int cnt;
+        
+        RequestShareFileTask(List<String> fileCloudIds, String emailAccount, 
+        		String accessToken) {
+        	this.mEmailAccount = emailAccount;
+        	this.mAccessToken = accessToken;
+        	//this.mIdToken = idToken;
+        	this.mFileCloudIds = fileCloudIds;
+        	this.cnt = 0;
+        }
+        
+        @Override
+        protected Boolean doInBackground(Void... params) {
+            try {
+            	URL base = new URL(AikumaSettings.getIndexServerUrl());
+            	for(String identifier : mFileCloudIds) {
+            		String path = String.format("/file/%s/share/%s", identifier, mEmailAccount);
+            		URL url = new URL(base, path);
+                    Log.i(TAG, "share url: " + url.toString());
+                    
+                    HttpURLConnection con = (HttpURLConnection) url.openConnection();
+                    con.setRequestMethod("PUT");
+                    con.setDoOutput(false);
+                    con.addRequestProperty("X-Aikuma-Auth-Token", AikumaSettings.getCurrentUserIdToken());
+                    switch (con.getResponseCode()) {
+                        case 200:
+                            cnt++;
+                    }
+            	}
+                
+            } catch (MalformedURLException e) {
+                Log.e(TAG, "malformed URL: " + e.getMessage());
+            } catch (ProtocolException e) {
+                Log.e(TAG, "protocol error: " + e.getMessage());
+            } catch (IOException e) {
+                Log.e(TAG, "io exception: " + e.getMessage());
+            }
+            
+            if(cnt > 0)
+            	return true;
+            else
+            	return false;
+        }
+        @Override
+        protected void onPostExecute(final Boolean result) {
+            if (result) {
+            	if(mFileCloudIds.size() == 1) {
+            		String identifier = mFileCloudIds.get(0);
+            		new DownloadFileTask (identifier, mEmailAccount, mAccessToken).execute();
+            	} else {
+            		//TODO: Donwload all item files
+            		/*
+            		Intent syncIntent = new Intent(this, GoogleCloudService.class);
+    				syncIntent.putExtra(GoogleCloudService.ACTION_KEY, "sync");
+    				syncIntent.putExtra(GoogleCloudService.ACCOUNT_KEY, 
+    						AikumaSettings.getCurrentUserId());
+    				syncIntent.putExtra(GoogleCloudService.TOKEN_KEY, 
+    						AikumaSettings.getCurrentUserToken());
+    				syncIntent.putExtra("forceSync", forceSync);
+    				startService(syncIntent);
+    				*/
+            	}
+            } else {
+            	Aikuma.showAlertDialog(CloudSearchActivity.this, "Error in getting a file");
+            }
+        }
+    }
+    
+    private class DownloadFileTask extends AsyncTask<Void, Void, Boolean> {
+    	
+    	private static final String TAG = "DownloadFileTask";
+
+    	private String mEmailAccount;
+    	private String mAccessToken;
+    	private String mFileCloudId;
+    	private File mFile;
+
+    	DownloadFileTask(String fileCloudId, String emailAccount, String accessToken) {
+    		this.mEmailAccount = emailAccount;
+    		this.mAccessToken = accessToken;
+    		this.mFileCloudId = fileCloudId;
+    	}
+    	
+		@Override
+		protected Boolean doInBackground(Void... params) {
+			DataStore gd;
+			try {
+				gd = new GoogleDriveStorage(mAccessToken, 
+						AikumaSettings.ROOT_FOLDER_ID, AikumaSettings.CENTRAL_USER_ID);
+			} catch (DataStore.StorageException e) {
+				Log.e(TAG, "Failed to initialize GoogleDriveStorage");
+				return false;
+			}
+			
+			FileModel item = FileModel.fromCloudId(mFileCloudId);
+			String relPath = mFileCloudId.substring(0, mFileCloudId.lastIndexOf('/'));
+			File dir = new File(FileIO.getAppRootPath(), relPath);
+			dir.mkdirs();
+			InputStream is = gd.load(mFileCloudId);
+			if (is == null) {
+				Log.e(TAG, "Failed to get a file from GoogleDriveStorage");
+				return false;
+			}
+			
+			try {
+				mFile = new File(dir, item.getIdExt());
+				FileOutputStream fos = 
+						new FileOutputStream(mFile);
+				Utils.copyStream(is, fos, true);
+			} catch (FileNotFoundException e) {
+				Log.e(TAG, e.getMessage());
+				return false;
+			} catch (IOException e) {
+				Log.e(TAG, e.getMessage());
+				return false;
+			}
+			
+			return true;
+		}
+    	
+		@Override
+		protected void onPostExecute(final Boolean result) {
+			if (result) {
+				setUpPlayer(mFile);
+				mediaPlayer.start();
+			} else {
+				Aikuma.showAlertDialog(CloudSearchActivity.this, "Error in downloading a file");
+			}
+				
+		}
     }
 }

@@ -41,6 +41,12 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * UI for debugging/testing communication with cloud-backend
+ * 
+ * @author Haejoong 
+ *
+ */
 public class DebugInfo extends Activity {
     final String TAG = DebugInfo.class.getName();
 
