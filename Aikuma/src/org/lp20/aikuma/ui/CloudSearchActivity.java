@@ -6,6 +6,7 @@ package org.lp20.aikuma.ui;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -22,6 +23,8 @@ import org.lp20.aikuma.storage.Index;
 import org.lp20.aikuma.util.AikumaSettings;
 
 import android.content.pm.ActivityInfo;
+import android.media.AudioManager;
+import android.media.MediaPlayer;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Parcelable;
@@ -40,11 +43,14 @@ public class CloudSearchActivity extends AikumaListActivity {
 	
 	private static final String TAG = "CloudSearchActivity";
 	
+	private MediaPlayer mediaPlayer;
+	
 	private EditText searchQueryView;
 	
-	private QuickActionMenu quickMenu;
+	private QuickActionMenu<Recording> quickMenu;
 	
 	private List<Recording> recordings;
+	private Map<String, String> recordingsDownUri;
 	private RecordingArrayAdapter adapter;
 	private Parcelable listViewState;
 	
@@ -54,8 +60,10 @@ public class CloudSearchActivity extends AikumaListActivity {
 		setContentView(R.layout.cloud_search);
 		setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 		
+		mediaPlayer = new MediaPlayer();
 		setUpQuickMenu();
 		recordings = new ArrayList<Recording>();
+		recordingsDownUri = new HashMap<String, String>();
 		adapter = new RecordingArrayAdapter(this, recordings, quickMenu);
 		setListAdapter(adapter);
 		
@@ -103,11 +111,12 @@ public class CloudSearchActivity extends AikumaListActivity {
 			Aikuma.showAlertDialog(this, "Network is disconnected");
 		
 		recordings.clear();
+		recordingsDownUri.clear();
 		String langQuery = searchQueryView.getText().toString().toLowerCase();
 		String emailAccount = AikumaSettings.getCurrentUserId();
 		String accessToken = AikumaSettings.getCurrentUserToken();
 		
-		new GetSearchResultsTask(langQuery, emailAccount, accessToken).execute();
+		new GetSearchResultsTask(0, langQuery, emailAccount, accessToken).execute();
 	}
 
 	private void showRecordingsOnCloud() {
@@ -120,33 +129,56 @@ public class CloudSearchActivity extends AikumaListActivity {
 	// Creates the quickMenu for the original recording 
 	//(quickMenu: download)
 	private void setUpQuickMenu() {
-		quickMenu = new QuickActionMenu(this);
-		
-		//QuickActionItem starAct = new QuickActionItem("star", R.drawable.star);
-		//QuickActionItem flagAct = new QuickActionItem("flag", R.drawable.flag);
-		//QuickActionItem shareAct = 
-				//new QuickActionItem("share", R.drawable.share);
-		
-		
-		//quickMenu.addActionItem(starAct);
-		//quickMenu.addActionItem(flagAct);
-		//quickMenu.addActionItem(shareAct);
-
+		quickMenu = new QuickActionMenu<Recording>(this);
 		
 		if(AikumaSettings.getCurrentUserToken() != null) {
+			QuickActionItem samplePlayAct =
+					new QuickActionItem("Sample", R.drawable.play_32);
 			QuickActionItem downloadAct = 
-					new QuickActionItem("down", R.drawable.download_32);
+					new QuickActionItem("Down", R.drawable.download_32);
+			
+			quickMenu.addActionItem(samplePlayAct);
 			quickMenu.addActionItem(downloadAct);
 		}
 		
 		
 		//setup the action item click listener
-		quickMenu.setOnActionItemClickListener(new QuickActionMenu.OnActionItemClickListener() {			
+		quickMenu.setOnActionItemClickListener(new QuickActionMenu.OnActionItemClickListener<Recording>() {			
 			@Override
-			public void onItemClick(int pos) {
+			public void onItemClick(int pos, Recording recording) {
 				Aikuma.showAlertDialog(CloudSearchActivity.this, "download");
+				
+				if (pos == 0) { //Download and Play Sample
+					Log.i(TAG, recording.getCloudIdentifier());
+					String downUri = recordingsDownUri.get(recording.getId());
+					//TODO: If preview file doesn't exist, Download the sample(preview)
+					
+					// Play sample
+					//setUpPlayer(recording);
+					//mediaPlayer.start();	
+	
+				} else if (pos == 1) { //Download the item
+					Log.i(TAG, recording.getId());
+					// TODO: Search the files belong to the item_id except for a sample file
+					
+					// TODO: Collect speaker IDs and download the files belonging to speaker_id
+					
+					// TODO: Re-indexing
+					
+				}
 			}
 		});
+	}
+	
+	private void setUpPlayer(Recording recording) {
+		mediaPlayer.reset();
+		mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+		try {
+			mediaPlayer.setDataSource(recording.getPreviewFile().getCanonicalPath());
+			mediaPlayer.prepare();
+		} catch (IOException e) {
+			Log.e(TAG, "Failed to prepare MediaPlayer: " + e.getMessage());
+		}
 	}
 	
 	/**
@@ -158,11 +190,13 @@ public class CloudSearchActivity extends AikumaListActivity {
     	
     	private static final String TAG = "GetSearchResultsTask";
 
+    	private int queryType;
     	private String mEmailAccount;
     	private String mAccessToken;
     	private String mQuery;
 
-        GetSearchResultsTask(String query, String emailAccount, String accessToken) {
+        GetSearchResultsTask(int queryType, String query, String emailAccount, String accessToken) {
+        	this.queryType = queryType;
         	this.mEmailAccount = emailAccount;
         	this.mAccessToken = accessToken;
         	this.mQuery = query;
@@ -172,39 +206,60 @@ public class CloudSearchActivity extends AikumaListActivity {
         protected Boolean doInBackground(Void... params) {
         	FusionIndex fi = new FusionIndex(mAccessToken);
         	Map<String, String> constraints = new TreeMap<String, String>();
-        	constraints.put("languages", mQuery);
-        	constraints.put("file_type", "source");
-        	//constraints.put("user_id", mEmailAccount);
         	
-        	//recordingsMetadata = 
-        	fi.search(constraints, new Index.SearchResultProcessor() {
-				@Override
-				public boolean process(Map<String, String> result) {
-					String metadataJSONStr = result.get("metadata");
-					Log.i(TAG, metadataJSONStr);
-					JSONParser parser = new JSONParser();
-					try {
-						JSONObject jsonObj = (JSONObject) parser.parse(metadataJSONStr);
-						recordings.add(Recording.read(jsonObj));
-					} catch (ParseException e) {
-						Log.e(TAG, e.getMessage());
-					} catch (IOException e) {
-						Log.e(TAG, e.getMessage());
-					}
-					
-					return true;
-				}
-			});
-        	
-        	if(recordings.size() > 0)
-        		return true;
-        	else
-        		return false;
+        	if(queryType == 0) {
+        		constraints.put("languages", mQuery);
+            	constraints.put("file_type", "source");
+            	//constraints.put("user_id", mEmailAccount);
+            	
+            	fi.search(constraints, new Index.SearchResultProcessor() {
+    				@Override
+    				public boolean process(Map<String, String> result) {
+    					String metadataJSONStr = result.get("metadata");
+    					String downloadUri = result.get("data_store_uri");
+    					Log.i(TAG, metadataJSONStr);
+    					Log.i(TAG, "downUri: " + downloadUri);
+    					JSONParser parser = new JSONParser();
+    					try {
+    						JSONObject jsonObj = (JSONObject) parser.parse(metadataJSONStr);
+    						Recording recording = Recording.read(jsonObj);
+    						recordings.add(recording);
+    						recordingsDownUri.put(recording.getId(), downloadUri);
+    					} catch (ParseException e) {
+    						Log.e(TAG, e.getMessage());
+    					} catch (IOException e) {
+    						Log.e(TAG, e.getMessage());
+    					}
+    					
+    					return true;
+    				}
+    			});
+            	
+            	if(recordings.size() > 0)
+            		return true;
+            	else
+            		return false;
+            	
+        	} else if (queryType == 1) {
+        		constraints.put("item_id", mQuery);
+        		
+        		fi.search(constraints, new Index.SearchResultProcessor() {
+    				@Override
+    				public boolean process(Map<String, String> result) {
+    					// TODO: Collect metadata for recording/speaker
+    					// TODO: Collect downloadUri for all files(recording, preview, mapping, ...)
+    					
+    					return true;
+    				}
+    			});
+        		
+        	}
+        	return false;
         }
         
         @Override
         protected void onPostExecute(Boolean result) {
-        	if(result)
+        	if(result && queryType == 0)
         		showRecordingsOnCloud();
         }
     }

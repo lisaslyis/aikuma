@@ -182,6 +182,11 @@ public class ListenFragment extends Fragment implements OnClickListener {
 		playPauseButton.setImageResource(R.drawable.pause_g);
 	}
 	
+	/**
+	 * Set the play-cursor to msec position
+	 * 
+	 * @param msec	Play-cursor position
+	 */
 	public void setProgress(int msec) {
 		player.seekToMsec(msec);
 		seekBar.setProgress(
