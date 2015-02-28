@@ -27,6 +27,7 @@ import org.lp20.aikuma.model.Recording;
 import org.lp20.aikuma.model.Speaker;
 import org.lp20.aikuma.storage.Data;
 import org.lp20.aikuma.storage.DataStore;
+import org.lp20.aikuma.storage.FusionIndex;
 import org.lp20.aikuma.storage.FusionIndex2;
 import org.lp20.aikuma.storage.GoogleAuth;
 import org.lp20.aikuma.storage.GoogleDriveStorage;
@@ -168,6 +169,13 @@ public class GoogleCloudService extends IntentService{
 			} else if(id.equals("autoDownload")) {
 				autoDownloadFiles();
 				validateToken();
+				// TODO: In the current state, metadata will not exist in GoogleDrive (needs to be changed later)
+				List<String> itemCloudIdsToDownload = intent.getStringArrayListExtra("downloadItems");
+				if(itemCloudIdsToDownload != null) {
+					for(String itemId : itemCloudIdsToDownload) {
+						downloadOtherSet.add(itemId);
+					}
+				}
 				retryDownload();
 			} else {					// Called when archive button is pressed (and token was already validated)
 				String itemType = (String)
@@ -430,7 +438,8 @@ public class GoogleCloudService extends IntentService{
 			return;
 		}
 		
-		Index fi = new FusionIndex2(AikumaSettings.getIndexServerUrl(), googleIdToken, googleAuthToken);
+		//Index fi = new FusionIndex2(AikumaSettings.getIndexServerUrl(), googleIdToken, googleAuthToken);
+		Index fi = new FusionIndex(googleAuthToken);
 		
 		// Others
 		retryBackup(gd, fi, approvalOtherKey, approvedOtherSet, 
@@ -815,7 +824,6 @@ public class GoogleCloudService extends IntentService{
 
 	private void validateToken() {
 		try {
-			Log.i(TAG, "tokens");
 			googleAuthToken = GoogleAuthUtil.getToken(getApplicationContext(), googleEmailAccount, AikumaSettings.getScope());
 			
 			googleIdToken = GoogleAuthUtil.getToken(getApplicationContext(), googleEmailAccount, AikumaSettings.getIdTokenScope());

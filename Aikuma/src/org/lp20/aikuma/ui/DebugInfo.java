@@ -143,6 +143,10 @@ public class DebugInfo extends Activity {
         };
     }
 
+    /**
+     * asdf
+     * @param view asdf
+     */
     public void runAuth(View view) {
         new AsyncTask<Void, Void, String[]>() {
             protected String[] doInBackground(Void... params) {
@@ -183,6 +187,10 @@ public class DebugInfo extends Activity {
         }.execute(null, null, null);
     }
 
+    /**
+     * asdf
+     * @param view	asdf
+     */
     public void listDocs(View view) {
         new AsyncTask<Void, Void, Void>() {
             @Override
@@ -205,6 +213,10 @@ public class DebugInfo extends Activity {
         }.execute(null, null, null);
     }
 
+    /**
+     * asdf
+     * @param view	asdf
+     */
     public void listIDs(View view) {
         new AsyncTask<Void,Void,Void>() {
             @Override
@@ -228,6 +240,10 @@ public class DebugInfo extends Activity {
         }.execute();
     }
 
+    /**
+     * asdf
+     * @param view	asdf
+     */
     public void requestShare(View view) {
         new AsyncTask<Void,Void,Boolean>() {
             final String identifier = ((TextView) findViewById(R.id.identifier)).getText().toString();
@@ -272,6 +288,10 @@ public class DebugInfo extends Activity {
         }.execute();
     }
 
+    /**
+     * asdf
+     * @param view	asdf
+     */
     public void clearLog(View view) {
         ((TextView) findViewById(R.id.txtGd)).setText("");
     }

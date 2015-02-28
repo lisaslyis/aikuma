@@ -63,12 +63,14 @@ public class CloudSearchActivity extends AikumaListActivity {
 	private String googleAuthToken;
 	
 	private MediaPlayer mediaPlayer;
+	private boolean isMediaPlayerReleased;
 	
 	private EditText searchQueryView;
 	
 	private QuickActionMenu<Recording> quickMenu;
 	
 	private List<Recording> recordings;
+	private List<String> itemIdsToDownload;
 	private Map<String, String> recordingsDownUri;
 	private RecordingArrayAdapter adapter;
 	private Parcelable listViewState;
@@ -83,8 +85,10 @@ public class CloudSearchActivity extends AikumaListActivity {
 		googleAuthToken = AikumaSettings.getCurrentUserToken();
 		
 		mediaPlayer = new MediaPlayer();
+		isMediaPlayerReleased = false;
 		setUpQuickMenu();
 		recordings = new ArrayList<Recording>();
+		itemIdsToDownload = new ArrayList<String>();
 		recordingsDownUri = new HashMap<String, String>();
 		adapter = new RecordingArrayAdapter(this, recordings, quickMenu);
 		setListAdapter(adapter);
@@ -120,6 +124,16 @@ public class CloudSearchActivity extends AikumaListActivity {
 		super.onPause();
 		listViewState = getListView().onSaveInstanceState();
 		MainActivity.locationDetector.stop();
+		
+		new GetSearchResultsTask(1, itemIdsToDownload, googleEmailAccount, googleAuthToken).execute();
+	}
+	
+	@Override
+	protected void onDestroy() {
+		super.onDestroy();
+		mediaPlayer.pause();
+		isMediaPlayerReleased = true;
+		mediaPlayer.release();
 	}
 	
 	
@@ -135,8 +149,10 @@ public class CloudSearchActivity extends AikumaListActivity {
 		recordings.clear();
 		recordingsDownUri.clear();
 		String langQuery = searchQueryView.getText().toString().toLowerCase();
+		List<String> query = new ArrayList<String>();
+		query.add(langQuery);
 		
-		new GetSearchResultsTask(0, langQuery, googleEmailAccount, googleAuthToken).execute();
+		new GetSearchResultsTask(0, query, googleEmailAccount, googleAuthToken).execute();
 	}
 
 	private void showRecordingsOnCloud() {
@@ -166,14 +182,17 @@ public class CloudSearchActivity extends AikumaListActivity {
 		quickMenu.setOnActionItemClickListener(new QuickActionMenu.OnActionItemClickListener<Recording>() {			
 			@Override
 			public void onItemClick(int pos, Recording recording) {
-				Aikuma.showAlertDialog(CloudSearchActivity.this, "download");
+				if(!Aikuma.isDeviceOnline()) {
+	        		Aikuma.showAlertDialog(getApplicationContext(), "Network is disconnected");
+	        		return;
+	        	}
 				
 				if (pos == 0) { //Download and Play Sample
 					Log.i(TAG, recording.getCloudIdentifier());
 					String downUri = recordingsDownUri.get(recording.getId());
 					//TODO: If preview file doesn't exist, Download the sample(preview)
 					File sampleFile = recording.getPreviewFile();
-					if(sampleFile.exists()) {
+					if(sampleFile != null) {
 						// Play sample
 						setUpPlayer(sampleFile);
 						mediaPlayer.start();	
@@ -184,18 +203,12 @@ public class CloudSearchActivity extends AikumaListActivity {
 						List<String> cloudId = new ArrayList<String>();
 						cloudId.add(sampleCloudId);
 						new RequestShareFileTask(cloudId, googleEmailAccount, googleAuthToken).execute();
-					}
-					
-					
+					}	
 	
 				} else if (pos == 1) { //Download the item
-					Log.i(TAG, recording.getId());
-					// TODO: Search the files belong to the item_id except for a sample file
-					
-					// TODO: Collect speaker IDs and download the files belonging to speaker_id
-					
-					// TODO: Re-indexing
-					
+					Log.i(TAG, recording.getGroupId());
+					String itemId = recording.getGroupId();
+					itemIdsToDownload.add(itemId);
 				}
 			}
 		});
@@ -213,7 +226,7 @@ public class CloudSearchActivity extends AikumaListActivity {
 	}
 	
 	/**
-     * Inner class to get an access token from google server
+     * Inner class to get search results from FusionIndex
      * @author Sangyeop Lee	<sangl1@student.unimelb.edu.au>
      *
      */
@@ -224,22 +237,36 @@ public class CloudSearchActivity extends AikumaListActivity {
     	private int queryType;
     	private String mEmailAccount;
     	private String mAccessToken;
-    	private String mQuery;
+    	private List<String> mQuery;
+    	
+    	Map<String, String> constraints;
+    	
+    	List<String> cloudIdsToDownload;
+		Map<String, String> metadataToWrite;
+		List<String> speakerIdsToDownload;
 
-        GetSearchResultsTask(int queryType, String query, String emailAccount, String accessToken) {
+        GetSearchResultsTask(int queryType, List<String> query, String emailAccount, String accessToken) {
         	this.queryType = queryType;
         	this.mEmailAccount = emailAccount;
         	this.mAccessToken = accessToken;
         	this.mQuery = query;
+        	
+        	cloudIdsToDownload = new ArrayList<String>();
+        	metadataToWrite = new HashMap<String, String>();
+    		speakerIdsToDownload = new ArrayList<String>();
+    		constraints = new TreeMap<String, String>();
         }
 
         @Override
         protected Boolean doInBackground(Void... params) {
-        	FusionIndex fi = new FusionIndex(mAccessToken);
-        	Map<String, String> constraints = new TreeMap<String, String>();
+        	if(!Aikuma.isDeviceOnline()) {
+        		return false;
+        	}
         	
+        	Index fi = new FusionIndex(mAccessToken);
+
         	if(queryType == 0) {
-        		constraints.put("languages", mQuery);
+        		constraints.put("languages", mQuery.get(0));
             	constraints.put("file_type", "source");
             	//constraints.put("user_id", mEmailAccount);
             	
@@ -272,29 +299,113 @@ public class CloudSearchActivity extends AikumaListActivity {
             		return false;
             	
         	} else if (queryType == 1) {
-        		constraints.put("item_id", mQuery);
         		
-        		fi.search(constraints, new Index.SearchResultProcessor() {
-    				@Override
-    				public boolean process(Map<String, String> result) {
-    					// TODO: Collect metadata for recording/speaker
-    					// TODO: Collect downloadUri for all files(recording, preview, mapping, ...)
-    					
-    					return true;
-    				}
-    			});
-        		
+        		// TODO: Search the files belong to the item_id except for a sample file
+				for(String itemId : mQuery) {
+					collectRelatedData(fi, itemId);
+				}
+				for(String speakerId : speakerIdsToDownload) {
+					collectRelatedData(fi, speakerId);
+				}
+				
+				Log.i(TAG, itemIdsToDownload.toString());
+				Log.i(TAG, cloudIdsToDownload.toString());
+				Log.i(TAG, speakerIdsToDownload.toString());
+
+				mQuery.clear();
+				Log.i(TAG, itemIdsToDownload.toString());
+				// Write metadata of recordings/speakers to JSON files
+				// TODO: This needs to be done by downloading shared METADATA from CloudService
+    			for(String identifier : metadataToWrite.keySet()) {
+    				String metadataJSONStr = metadataToWrite.get(identifier);
+    				writeJSONFile(identifier, metadataJSONStr);
+    			}
+    			if(cloudIdsToDownload.size() > 0)
+    				return true;
+    			else
+    				return false;
         	}
         	return false;
         }
         
         @Override
         protected void onPostExecute(Boolean result) {
-        	if(result && queryType == 0)
-        		showRecordingsOnCloud();
+        	if(result) {
+        		switch(queryType) {
+        		case 0:
+        			showRecordingsOnCloud();
+        			break;
+        		case 1:
+        			// Download Files
+        			new RequestShareFileTask(cloudIdsToDownload, mEmailAccount, mAccessToken).execute();
+        			
+        			break;
+        		}
+        	}
+        		
         }
+        
+        private void collectRelatedData(Index fi, String identifier) {
+        	constraints.clear();
+			constraints.put("item_id", identifier);
+			
+			fi.search(constraints, new Index.SearchResultProcessor() {
+				@Override
+				public boolean process(Map<String, String> result) {
+					String fileType = result.get("file_type");
+					if(fileType.equals("preview"))
+						return true;
+					
+					// TODO: Collect identifiers for all files(recording, mapping, ...) / exclude preview
+					String identifier = result.get("identifier");
+					cloudIdsToDownload.add(identifier);
+					
+					// TODO: Collect metadata for recording
+					if(fileType.equals("speaker") || fileType.equals("source") || 
+							fileType.equals("respeaking")) {
+						String metadataJSONStr = result.get("metadata");
+						metadataToWrite.put(identifier, metadataJSONStr);
+					}
+					
+					// TODO: Collect speaker IDs and download the files belonging to speaker_id
+					String speakerIdsStr = result.get("speakers");
+					String[] speakerIds = speakerIdsStr.split("\\|");
+					for(String speakerId : speakerIds) {
+						if(speakerId.length() == 0)
+							continue;
+						speakerIdsToDownload.add(speakerId);
+					}
+					
+					return true;
+				}
+    		});
+        }
+        
+        private void writeJSONFile(String identifier, String metadataJSONStr) {
+			FileModel fileModel = FileModel.fromCloudId(identifier);
+			JSONParser parser = new JSONParser();
+			try {
+				JSONObject jsonObj = (JSONObject) parser.parse(metadataJSONStr);
+				
+				String relPath = identifier.substring(0, identifier.lastIndexOf('/'));
+				File dir = new File(FileIO.getAppRootPath(), relPath);
+				dir.mkdirs();
+				
+				Log.i(TAG, dir.getAbsolutePath() + ", " + fileModel.getMetadataIdExt());
+				FileIO.writeJSONObject(new File(dir, fileModel.getMetadataIdExt()), jsonObj);
+			} catch (ParseException e) {
+				Log.e(TAG, e.getMessage());
+			} catch (IOException e) {
+				Log.e(TAG, e.getMessage());
+			}
+		}
     }
     
+    /**
+     * Inner class to request the share of a file to central Index-server
+     * @author Sangyeop Lee	<sangl1@student.unimelb.edu.au>
+     *
+     */
     private class RequestShareFileTask extends AsyncTask<Void, Void, Boolean> {
     	private static final String TAG = "RequestShareFileTask";
 
@@ -315,6 +426,10 @@ public class CloudSearchActivity extends AikumaListActivity {
         
         @Override
         protected Boolean doInBackground(Void... params) {
+        	if(!Aikuma.isDeviceOnline()) {
+        		return false;
+        	}
+        	
             try {
             	URL base = new URL(AikumaSettings.getIndexServerUrl());
             	for(String identifier : mFileCloudIds) {
@@ -329,6 +444,13 @@ public class CloudSearchActivity extends AikumaListActivity {
                     switch (con.getResponseCode()) {
                         case 200:
                             cnt++;
+                            break;
+                        case 404:
+                        	Log.e(TAG, "404");
+                        	break;
+                        default:
+                        	Log.e(TAG, "" + con.getResponseCode());
+                        	break;
                     }
             	}
                 
@@ -340,6 +462,7 @@ public class CloudSearchActivity extends AikumaListActivity {
                 Log.e(TAG, "io exception: " + e.getMessage());
             }
             
+            Log.i(TAG, "cnt: " + cnt);
             if(cnt > 0)
             	return true;
             else
@@ -353,23 +476,34 @@ public class CloudSearchActivity extends AikumaListActivity {
             		new DownloadFileTask (identifier, mEmailAccount, mAccessToken).execute();
             	} else {
             		//TODO: Donwload all item files
-            		/*
-            		Intent syncIntent = new Intent(this, GoogleCloudService.class);
-    				syncIntent.putExtra(GoogleCloudService.ACTION_KEY, "sync");
-    				syncIntent.putExtra(GoogleCloudService.ACCOUNT_KEY, 
-    						AikumaSettings.getCurrentUserId());
-    				syncIntent.putExtra(GoogleCloudService.TOKEN_KEY, 
-    						AikumaSettings.getCurrentUserToken());
-    				syncIntent.putExtra("forceSync", forceSync);
-    				startService(syncIntent);
-    				*/
+            		// autoDownload will work when user leaves this activity (onPause)
+            		// When the device pauses, downloading all shared files
+            		// Re-indexing will be done by cloud-service
+            		// TODO: make cloud-service share metadata as well so that it can be downloaded
+            		Log.i(TAG, "autodownload start");
+            		Intent syncIntent = new Intent(CloudSearchActivity.this, GoogleCloudService.class);
+            		syncIntent.putExtra(GoogleCloudService.ACTION_KEY, "autoDownload");
+            		syncIntent.putExtra(GoogleCloudService.ACCOUNT_KEY, 
+            				AikumaSettings.getCurrentUserId());
+            		syncIntent.putExtra(GoogleCloudService.TOKEN_KEY, 
+            				AikumaSettings.getCurrentUserToken());
+            		startService(syncIntent);
+
             	}
             } else {
-            	Aikuma.showAlertDialog(CloudSearchActivity.this, "Error in getting a file");
+            	if(mFileCloudIds.size() == 1) {
+            		//Aikuma.showAlertDialog(getApplicationContext(), "Error in getting a file");
+            	}
+            	
             }
         }
     }
     
+    /**
+     * Inner class to download a sample file from google drive
+     * @author Sangyeop Lee	<sangl1@student.unimelb.edu.au>
+     *
+     */
     private class DownloadFileTask extends AsyncTask<Void, Void, Boolean> {
     	
     	private static final String TAG = "DownloadFileTask";
@@ -425,12 +559,15 @@ public class CloudSearchActivity extends AikumaListActivity {
 		@Override
 		protected void onPostExecute(final Boolean result) {
 			if (result) {
-				setUpPlayer(mFile);
-				mediaPlayer.start();
+				if(!isMediaPlayerReleased) {
+					setUpPlayer(mFile);
+					mediaPlayer.start();
+				}
 			} else {
-				Aikuma.showAlertDialog(CloudSearchActivity.this, "Error in downloading a file");
+				//Aikuma.showAlertDialog(getApplicationContext(), "Error in downloading a file");
 			}
 				
 		}
+
     }
 }

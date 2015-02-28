@@ -33,6 +33,7 @@ public abstract class AikumaListActivity extends ListActivity {
 		actionBar.setDisplayHomeAsUpEnabled(true);
 		actionBar.setDisplayShowTitleEnabled(false);
 	}
+	
 
 	/**
 	 * Called to create the options menu using MenuBehaviour.

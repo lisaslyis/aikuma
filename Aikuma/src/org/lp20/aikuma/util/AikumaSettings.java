@@ -34,7 +34,7 @@ public class AikumaSettings {
 	// Current default owner_auth_token(== default Google API access_token)
 	private static String DEFAULT_USER_AUTH_TOKEN = null;
 	private static String DEFAULT_USER_ID_TOKEN = null;
-	private static String DEFAULT_INDEX_SERVER = "https://aikuma.info:445/index";
+	private static String DEFAULT_INDEX_SERVER = "https://aikuma.info:443/index";
 	private static String DEFAULT_INDEX_SERVER_CLIENT_ID = "530026557211-46brcqr1p4ltlru6j6duc0am14oh83ei.apps.googleusercontent.com";
 	/**
 	 * Account of central fusion table

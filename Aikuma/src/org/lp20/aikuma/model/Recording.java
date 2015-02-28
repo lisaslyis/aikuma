@@ -1299,6 +1299,7 @@ public class Recording extends FileModel {
 	 * otherwise
 	 */
 	public boolean isStarredByThisPhone(String currentVerName, String userId) {
+		Log.i(TAG, "id: " + userId);
 		String androidID = Aikuma.getAndroidID();
 		File starFile = 
 				new File(FileIO.getOwnerPath(currentVerName, userId), "/social/" +
