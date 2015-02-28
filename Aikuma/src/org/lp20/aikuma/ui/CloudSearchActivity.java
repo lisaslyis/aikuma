@@ -125,7 +125,8 @@ public class CloudSearchActivity extends AikumaListActivity {
 		listViewState = getListView().onSaveInstanceState();
 		MainActivity.locationDetector.stop();
 		
-		new GetSearchResultsTask(1, itemIdsToDownload, googleEmailAccount, googleAuthToken).execute();
+		new GetSearchResultsTask(1, new ArrayList<String>(itemIdsToDownload), 
+				googleEmailAccount, googleAuthToken).execute();
 	}
 	
 	@Override
@@ -412,7 +413,7 @@ public class CloudSearchActivity extends AikumaListActivity {
     	private String mEmailAccount;
     	private String mAccessToken;
     	//private String mIdToken;
-    	private List<String> mFileCloudIds;
+    	private ArrayList<String> mFileCloudIds;
     	private int cnt;
         
         RequestShareFileTask(List<String> fileCloudIds, String emailAccount, 
@@ -420,7 +421,7 @@ public class CloudSearchActivity extends AikumaListActivity {
         	this.mEmailAccount = emailAccount;
         	this.mAccessToken = accessToken;
         	//this.mIdToken = idToken;
-        	this.mFileCloudIds = fileCloudIds;
+        	this.mFileCloudIds = new ArrayList<String>(fileCloudIds);
         	this.cnt = 0;
         }
         
@@ -487,6 +488,7 @@ public class CloudSearchActivity extends AikumaListActivity {
             				AikumaSettings.getCurrentUserId());
             		syncIntent.putExtra(GoogleCloudService.TOKEN_KEY, 
             				AikumaSettings.getCurrentUserToken());
+            		syncIntent.putStringArrayListExtra("downloadItems", mFileCloudIds);
             		startService(syncIntent);
 
             	}
