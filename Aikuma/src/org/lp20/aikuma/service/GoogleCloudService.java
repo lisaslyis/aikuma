@@ -275,7 +275,6 @@ public class GoogleCloudService extends IntentService{
         gd.list(new GoogleDriveStorage.ListItemHandler() {
 			@Override
 			public boolean processItem(String identifier, Date date) {
-				identifier = identifier.substring(1);	// TODO???
 				// Classify identifiers and store them in different lists 
 				if(identifier.matches(cloudIdFormat)) {
 					String relPath = identifier.substring(0, identifier.lastIndexOf('/')-12);
@@ -438,13 +437,13 @@ public class GoogleCloudService extends IntentService{
 			return;
 		}
 		
-		//Index fi = new FusionIndex2(AikumaSettings.getIndexServerUrl(), googleIdToken, googleAuthToken);
-		Index fi = new FusionIndex(googleAuthToken);
+		Index fi = new FusionIndex2(AikumaSettings.getIndexServerUrl(), googleIdToken, googleAuthToken);
+		//Index fi = new FusionIndex(googleAuthToken);
 		
 		// Others
 		retryBackup(gd, fi, approvalOtherKey, approvedOtherSet, 
 				archiveOtherKey, archivedOtherSet);
-		
+
 		// Speakers
 		retryBackup(gd, fi, approvalSpKey, approvedSpeakerSet,
 				archiveSpKey, archivedSpeakerSet);

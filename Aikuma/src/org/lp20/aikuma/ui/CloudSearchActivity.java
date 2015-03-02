@@ -122,6 +122,8 @@ public class CloudSearchActivity extends AikumaListActivity {
 	@Override
 	public void onPause() {
 		super.onPause();
+		
+		mediaPlayer.pause();
 		listViewState = getListView().onSaveInstanceState();
 		MainActivity.locationDetector.stop();
 		
@@ -132,7 +134,7 @@ public class CloudSearchActivity extends AikumaListActivity {
 	@Override
 	protected void onDestroy() {
 		super.onDestroy();
-		mediaPlayer.pause();
+
 		isMediaPlayerReleased = true;
 		mediaPlayer.release();
 	}
